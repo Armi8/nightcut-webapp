@@ -3,97 +3,95 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NightCut Mini App</title>
+    <title>NightCut Explorer</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body {
-            background-color: #1a1a1a;
-            color: white;
-            font-family: Tahoma, sans-serif;
-            margin: 0;
-            padding: 10px;
-        }
-        .header {
-            text-align: center;
-            padding: 10px;
-            font-weight: bold;
-            font-size: 18px;
-            color: #e50914; /* Netflix Red */
-        }
+        body { background-color: #121212; color: #fff; font-family: Tahoma, sans-serif; margin: 0; padding: 10px; }
+        .header { text-align: center; padding: 15px; font-size: 20px; color: #e50914; font-weight: bold; }
+        
+        /* استایل لودینگ */
+        #loading { text-align: center; margin-top: 50px; color: #888; }
+
         .movie-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr); /* دو ستون */
+            grid-template-columns: repeat(2, 1fr);
             gap: 15px;
+            padding-bottom: 20px;
         }
         .movie-card {
-            background-color: #2f2f2f;
-            border-radius: 10px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
             overflow: hidden;
-            text-align: center;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
         }
-        .movie-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        .movie-title {
-            font-size: 14px;
-            margin: 10px 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 0 5px;
-        }
-        .btn-download {
-            background-color: #e50914;
-            color: white;
-            border: none;
-            padding: 8px 0;
-            width: 90%;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .btn-download:active {
-            background-color: #b20710;
+        .movie-card:active { transform: scale(0.98); }
+        .movie-card img { width: 100%; height: 220px; object-fit: cover; }
+        .movie-info { padding: 10px; }
+        .movie-title { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 5px; }
+        .movie-vote { font-size: 11px; color: #ffd700; }
+        .btn-dl {
+            background-color: #e50914; color: white; border: none;
+            width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px;
+            cursor: pointer; font-size: 12px;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">🍿 ویترین نایت‌کات</div>
+    <div class="header">🍿 جدیدترین‌های ربات</div>
 
-    <div class="movie-grid">
-        <div class="movie-card">
-            <img src="https://image.tmdb.org/t/p/w500/udDclJoHjfjb8Ekgsd4FDteOkCU.jpg" alt="Joker">
-            <div class="movie-title">Joker (2019)</div>
-            <button class="btn-download" onclick="sendToBot('joker_2019')">📥 دریافت</button>
-        </div>
+    <div id="loading">⏳ در حال دریافت لیست فیلم‌ها...</div>
 
-        <div class="movie-card">
-            <img src="https://image.tmdb.org/t/p/w500/8ZKKq70pBUpu5Li9yjgm3qGLokn.jpg" alt="Inception">
-            <div class="movie-title">Inception (2010)</div>
-            <button class="btn-download" onclick="sendToBot('inception_2010')">📥 دریافت</button>
-        </div>
-
-        <div class="movie-card">
-            <img src="https://image.tmdb.org/t/p/w500/gEU2QniL6E8ahDaX0ODbj0gbwnE.jpg" alt="Interstellar">
-            <div class="movie-title">Interstellar (2014)</div>
-            <button class="btn-download" onclick="sendToBot('interstellar_2014')">📥 دریافت</button>
-        </div>
-    </div>
+    <div class="movie-grid" id="container"></div>
 
     <script>
-        // فعال‌سازی ربات وب‌اپ
         const tg = window.Telegram.WebApp;
-        tg.expand(); // تمام صفحه کردن
+        tg.expand();
 
-        function sendToBot(movieCode) {
-            // این دستور جادویی، دیتا رو میفرسته به ربات پایتونی تو
-            tg.sendData(movieCode);
+        // 🔥🔥🔥 آدرس NGROK خودت رو اینجا بذار (بدون اسلش آخر) 🔥🔥🔥
+        // مثال: const API_URL = "https://a1b2-c3d4.ngrok-free.app";
+        const API_URL = "https://underlying-opportunities-rap-canal.trycloudflare.com/"; 
+
+        async function fetchMovies() {
+            try {
+                // درخواست به API پایتونی تو
+                const response = await fetch(`${API_URL}/api/movies`);
+                const movies = await response.json();
+
+                // حذف پیام لودینگ
+                document.getElementById('loading').style.display = 'none';
+                const container = document.getElementById('container');
+
+                // ساختن کارت‌ها برای هر فیلم
+                movies.forEach(movie => {
+                    const card = document.createElement('div');
+                    card.className = 'movie-card';
+                    
+                    // قالب HTML هر کارت
+                    card.innerHTML = `
+                        <img src="${movie.poster}" onerror="this.src='https://via.placeholder.com/500x750?text=No+Img'">
+                        <div class="movie-info">
+                            <div class="movie-title">${movie.title}</div>
+                            <div class="movie-vote">⭐ ${movie.vote}</div>
+                            <button class="btn-dl" onclick="selectMovie('${movie.code}')">📥 دانلود سریع</button>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (error) {
+                document.getElementById('loading').innerHTML = "❌ خطا در اتصال به سرور.<br>مطمئن شوید API روشن است.";
+                console.error(error);
+            }
         }
+
+        function selectMovie(code) {
+            tg.sendData(code);
+        }
+
+        // شروع برنامه
+        fetchMovies();
     </script>
 
 </body>
