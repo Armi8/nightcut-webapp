@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NightCut Native</title>
+    <title>NightCut App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,8 +11,10 @@
     <style>
         :root {
             --bg: #0f1014;
+            --card-bg: #1a1b1f;
             --text: #ffffff;
             --text-muted: #8e929b;
+            --primary: #e50914; /* قرمز نتفلیکسی */
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -26,128 +28,132 @@
             overflow-x: hidden;
         }
 
-        /* --- هدر پروفایل --- */
-        .header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 20px 20px 10px 20px; /* پدینگ پایین کمتر شد چون بنر رفت */
+        /* --- نوار جستجو (Sticky Header) --- */
+        .search-area {
+            position: sticky; top: 0; z-index: 100;
+            background: rgba(15, 16, 20, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .user-profile {
-            display: flex; align-items: center; gap: 12px;
-        }
-        .avatar {
-            width: 50px; height: 50px; border-radius: 50%;
-            object-fit: cover; border: 2px solid #222;
+        .search-wrapper {
+            position: relative;
             background: #222;
+            border-radius: 12px;
+            display: flex; align-items: center;
+            border: 1px solid #333;
         }
-        .welcome-text { font-size: 11px; color: var(--text-muted); }
-        .username-text { font-size: 16px; font-weight: 800; }
-
-        .menu-btn {
-            width: 40px; height: 40px; background: #1a1b1f;
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 22px; cursor: pointer; color: white;
+        .search-input {
+            width: 100%; background: transparent; border: none;
+            padding: 12px 45px 12px 15px; color: white;
+            font-family: inherit; font-size: 14px;
         }
+        .search-icon { position: absolute; right: 15px; color: #777; }
 
-        /* --- استایل‌های سکشن --- */
+        /* --- استایل مشترک سکشن‌ها --- */
         .section-header {
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 0 20px; margin-bottom: 15px; margin-top: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; margin-top: 25px; margin-bottom: 15px;
         }
-        .section-title { font-size: 20px; font-weight: 800; }
-        .view-all { font-size: 12px; color: var(--text-muted); text-decoration: none; }
+        .section-title { 
+            font-size: 18px; font-weight: 800; 
+            border-right: 3px solid var(--primary); padding-right: 10px;
+        }
+        .view-all { font-size: 12px; color: var(--text-muted); opacity: 0.8; }
 
-        /* --- اسلایدر افقی --- */
+        /* --- اسلایدرهای افقی --- */
         .scroll-container {
-            display: flex; gap: 20px; overflow-x: auto;
-            padding: 0 20px 30px 20px;
+            display: flex; gap: 15px; overflow-x: auto;
+            padding: 0 20px 10px 20px;
             scroll-snap-type: x mandatory;
         }
         .scroll-container::-webkit-scrollbar { display: none; }
 
+        /* کارت بزرگ (محبوب‌ها) */
         .movie-card-large {
-            flex: 0 0 240px; position: relative;
-            scroll-snap-align: center;
+            flex: 0 0 160px; /* عرض کارت */
+            position: relative; scroll-snap-align: start;
+        }
+        .poster-large {
+            width: 100%; aspect-ratio: 2/3; border-radius: 16px;
+            object-fit: cover; box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+        }
+        .rank-badge {
+            position: absolute; top: -5px; right: -5px;
+            background: var(--primary); color: white;
+            width: 25px; height: 25px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 12px; border: 2px solid var(--bg);
+            z-index: 10;
         }
 
-        .poster-container {
-            width: 100%; aspect-ratio: 2/3;
-            border-radius: 24px; overflow: hidden; position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* کارت معمولی (فیلم و سریال) */
+        .movie-card-normal {
+            flex: 0 0 130px; /* عرض کمتر */
+            position: relative; scroll-snap-align: start;
         }
-        .poster-img { width: 100%; height: 100%; object-fit: cover; }
-        .poster-overlay {
-            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, transparent 60%);
+        .poster-normal {
+            width: 100%; aspect-ratio: 2/3; border-radius: 12px;
+            object-fit: cover;
         }
-
-        .card-info {
-            position: absolute; bottom: 15px; left: 15px; right: 15px; z-index: 2;
-        }
-        .movie-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px black; }
         
-        .rating-row { display: flex; align-items: center; gap: 5px; margin-bottom: 8px; font-size: 12px; font-weight: bold;}
-        .star { color: #f1c40f; }
-
-        .tags { display: flex; gap: 5px; }
-        .tag {
-            padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: bold;
-            text-transform: uppercase;
+        /* اطلاعات زیر کارت */
+        .card-meta { margin-top: 8px; }
+        .movie-title { 
+            font-size: 13px; font-weight: 600; white-space: nowrap; 
+            overflow: hidden; text-overflow: ellipsis; 
+            direction: ltr; text-align: left;
         }
-        .tag.blue { background: rgba(52, 152, 219, 0.3); color: #85c1e9; }
-        .tag.purple { background: rgba(155, 89, 182, 0.3); color: #d7bde2; }
-
-        /* --- لیست عمودی --- */
-        .vertical-list { padding: 0 20px; display: flex; flex-direction: column; gap: 15px; }
-        
-        .movie-card-small {
-            display: flex; gap: 15px; align-items: center;
-            background: #15161a; padding: 10px; border-radius: 16px;
-        }
-        .small-poster { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
-        .small-info { flex: 1; }
-        .small-title { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
-        .small-meta { font-size: 11px; color: var(--text-muted); }
-        .play-btn-small {
-            width: 35px; height: 35px; background: #222; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; color: var(--text-muted);
+        .movie-rating { 
+            font-size: 11px; color: #ffd700; display: flex; align-items: center; gap: 3px;
         }
 
         /* لودینگ */
-        .skeleton { background: #222; width: 100%; height: 100%; animation: pulse 1.5s infinite; border-radius: inherit; }
+        .skeleton { background: #222; border-radius: 12px; width: 100%; height: 100%; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% {opacity: 0.5;} 50% {opacity: 1;} 100% {opacity: 0.5;} }
+        .sk-card { aspect-ratio: 2/3; }
+
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="user-profile">
-            <img src="" class="avatar" id="userAvatar">
-            <div>
-                <div class="welcome-text">خوش اومدی 👋</div>
-                <div class="username-text" id="userName">کاربر مهمان</div>
-            </div>
+    <div class="search-area">
+        <div class="search-wrapper">
+            <span class="search-icon"><i class="bi bi-search"></i></span>
+            <input type="text" class="search-input" id="searchInput" placeholder="جستجوی فیلم یا سریال..." oninput="handleSearch()">
         </div>
-        <div class="menu-btn"><i class="bi bi-list"></i></div>
     </div>
 
-    <div class="section-header">
-        <div class="section-title">محبوب‌ترین‌ها</div>
-        <a href="#" class="view-all">مشاهده همه</a>
-    </div>
+    <div id="mainContent">
+        <div class="section-header">
+            <div class="section-title">محبوب‌ترین‌های ربات 🔥</div>
+        </div>
+        <div class="scroll-container" id="popularContainer">
+            <div class="movie-card-large"><div class="skeleton sk-card"></div></div>
+            <div class="movie-card-large"><div class="skeleton sk-card"></div></div>
+            <div class="movie-card-large"><div class="skeleton sk-card"></div></div>
+        </div>
 
-    <div class="scroll-container" id="popularContainer">
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-    </div>
+        <div class="section-header">
+            <div class="section-title">جدیدترین فیلم‌ها 🎬</div>
+        </div>
+        <div class="scroll-container" id="moviesContainer">
+            <div class="movie-card-normal"><div class="skeleton sk-card"></div></div>
+            <div class="movie-card-normal"><div class="skeleton sk-card"></div></div>
+        </div>
 
-    <div class="section-header">
-        <div class="section-title">تازه‌ها</div>
-        <a href="#" class="view-all">مشاهده همه</a>
+        <div class="section-header">
+            <div class="section-title">جدیدترین سریال‌ها 📺</div>
+        </div>
+        <div class="scroll-container" id="seriesContainer">
+            <div class="movie-card-normal"><div class="skeleton sk-card"></div></div>
+            <div class="movie-card-normal"><div class="skeleton sk-card"></div></div>
+        </div>
     </div>
-
-    <div class="vertical-list" id="newContainer">
-        <div class="skeleton" style="height: 80px; border-radius: 16px;"></div>
-        <div class="skeleton" style="height: 80px; border-radius: 16px; margin-top:10px;"></div>
+    
+    <div id="searchResults" style="display:none;">
+        <div class="section-header"><div class="section-title">نتایج جستجو</div></div>
+        <div class="movie-grid" id="searchGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 0 20px;"></div>
     </div>
 
     <script>
@@ -158,83 +164,60 @@
         // 🔥🔥🔥 لینک کلادفلر خودت رو بذار 🔥🔥🔥
         const API_URL = "https://baths-differ-yourself-poll.trycloudflare.com";
 
-        // --- تنظیم اطلاعات کاربر ---
-        function setupUser() {
-            // آواتار و نام پیش‌فرض
-            let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=random";
-            let name = "کاربر مهمان";
+        async function initApp() {
+            try {
+                // دریافت ۳ دسته اطلاعات به صورت همزمان
+                const [topRes, movieRes, seriesRes] = await Promise.all([
+                    fetch(`${API_URL}/api/top`),
+                    fetch(`${API_URL}/api/movies?type=movie&page=1`),
+                    fetch(`${API_URL}/api/movies?type=series&page=1`)
+                ]);
 
-            // بررسی می‌کنیم آیا اصلاً تلگرام اطلاعاتی فرستاده یا نه
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                const u = tg.initDataUnsafe.user;
-                
-                // 1. گرفتن نام
-                if (u.first_name) {
-                    name = u.first_name + (u.last_name ? " " + u.last_name : "");
-                } else if (u.username) {
-                    name = u.username;
-                }
+                const topData = await topRes.json();
+                const movieData = await movieRes.json();
+                const seriesData = await seriesRes.json();
 
-                // 2. گرفتن عکس (با هندل کردن حالت‌های مختلف)
-                if (u.photo_url) {
-                    avatarUrl = u.photo_url;
-                } else {
-                    // اگر عکس نداشت یا تلگرام نفرستاد، با حروف اول اسمش آواتار میسازیم
-                    // از background=222 استفاده میکنیم که دارک باشه
-                    avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=222&color=fff&size=128`;
-                }
+                renderSection('popularContainer', topData, 'large');
+                renderSection('moviesContainer', movieData, 'normal');
+                renderSection('seriesContainer', seriesData, 'normal');
 
-                console.log("User found:", u); // برای دیباگ
+            } catch (e) { console.error("Error loading data:", e); }
+        }
 
-            } else {
-                // اگر اطلاعات نیومد، یه پیام موقت نشون بده (فقط برای تست خودت)
-                // بعد از اینکه مطمئن شدی کار میکنه این خط رو پاک کن
-               // alert("اطلاعات کاربر دریافت نشد! حتما از داخل ربات باز کنید.");
+        function renderSection(containerId, data, type) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = ''; // پاک کردن لودینگ
+
+            if(data.length === 0) {
+                container.innerHTML = '<p style="font-size:12px; color:#666; padding:0 20px;">موردی یافت نشد.</p>';
+                return;
             }
 
-            // اعمال در HTML
-            document.getElementById('userName').innerText = name;
-            document.getElementById('userAvatar').src = avatarUrl;
-        }
-        async function fetchData() {
-            try {
-                const resPop = await fetch(`${API_URL}/api/movies?page=1`);
-                const popularMovies = await resPop.json();
-                renderPopular(popularMovies);
-
-                const resNew = await fetch(`${API_URL}/api/movies?page=2`);
-                const newMovies = await resNew.json();
-                renderNew(newMovies);
-            } catch (e) { console.error(e); }
-        }
-
-        function renderPopular(movies) {
-            const container = document.getElementById('popularContainer');
-            container.innerHTML = '';
-            movies.forEach(m => {
-                const genres = ["اکشن", "درام", "علمی تخیلی"];
-                const g1 = genres[Math.floor(Math.random()*genres.length)];
-                const g2 = genres[Math.floor(Math.random()*genres.length)];
-
+            data.forEach((m, index) => {
                 const card = document.createElement('div');
-                card.className = 'movie-card-large';
-                card.onclick = () => { tg.HapticFeedback.impactOccurred('medium'); tg.sendData(m.code); };
+                // تشخیص کلاس بر اساس نوع کارت (بزرگ برای محبوب‌ها، نرمال برای بقیه)
+                card.className = type === 'large' ? 'movie-card-large' : 'movie-card-normal';
+                
+                card.onclick = () => { 
+                    tg.HapticFeedback.impactOccurred('light'); 
+                    tg.sendData(m.code); 
+                };
+
+                // بج رتبه برای محبوب‌ها (۱، ۲، ۳ ...)
+                const rankHtml = type === 'large' ? `<div class="rank-badge">${index + 1}</div>` : '';
+                
+                // کلاس پوستر
+                const posterClass = type === 'large' ? 'poster-large' : 'poster-normal';
 
                 card.innerHTML = `
-                    <div class="poster-container">
-                        <img src="${m.poster}" class="poster-img">
-                        <div class="poster-overlay"></div>
-                        
-                        <div class="card-info">
-                            <div class="movie-title">${m.title}</div>
-                            <div class="rating-row">
-                                <span class="star"><i class="bi bi-star-fill"></i></span>
-                                <span>${m.vote}</span>
-                            </div>
-                            <div class="tags">
-                                <span class="tag blue">${g1}</span>
-                                <span class="tag purple">${g2}</span>
-                            </div>
+                    <div style="position:relative;">
+                        ${rankHtml}
+                        <img src="${m.poster}" class="${posterClass}" loading="lazy">
+                    </div>
+                    <div class="card-meta">
+                        <div class="movie-title">${m.title}</div>
+                        <div class="movie-rating">
+                            <i class="bi bi-star-fill" style="font-size:10px;"></i> ${m.vote}
                         </div>
                     </div>
                 `;
@@ -242,29 +225,53 @@
             });
         }
 
-        function renderNew(movies) {
-            const container = document.getElementById('newContainer');
-            container.innerHTML = '';
-            movies.slice(0, 10).forEach(m => {
-                const card = document.createElement('div');
-                card.className = 'movie-card-small';
-                card.onclick = () => { tg.HapticFeedback.impactOccurred('light'); tg.sendData(m.code); };
+        // --- لاجیک جستجو ---
+        let searchTimer;
+        function handleSearch() {
+            const query = document.getElementById('searchInput').value;
+            const mainContent = document.getElementById('mainContent');
+            const searchResults = document.getElementById('searchResults');
+            const searchGrid = document.getElementById('searchGrid');
 
-                card.innerHTML = `
-                    <img src="${m.poster}" class="small-poster">
-                    <div class="small-info">
-                        <div class="small-title">${m.title}</div>
-                        <div class="small-meta">کیفیت بالا • زیرنویس فارسی</div>
-                    </div>
-                    <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
-                `;
-                container.appendChild(card);
-            });
+            clearTimeout(searchTimer);
+
+            if (!query) {
+                mainContent.style.display = 'block';
+                searchResults.style.display = 'none';
+                return;
+            }
+
+            searchTimer = setTimeout(async () => {
+                mainContent.style.display = 'none';
+                searchResults.style.display = 'block';
+                searchGrid.innerHTML = '<div class="skeleton sk-card"></div><div class="skeleton sk-card"></div><div class="skeleton sk-card"></div>';
+
+                try {
+                    const res = await fetch(`${API_URL}/api/movies?q=${query}`);
+                    const data = await res.json();
+                    
+                    searchGrid.innerHTML = '';
+                    if(data.length === 0) {
+                        searchGrid.innerHTML = '<p style="color:#aaa;">نتیجه‌ای یافت نشد.</p>';
+                        return;
+                    }
+
+                    data.forEach(m => {
+                        const div = document.createElement('div');
+                        div.innerHTML = `
+                             <img src="${m.poster}" style="width:100%; aspect-ratio:2/3; border-radius:10px; object-fit:cover;">
+                             <div style="font-size:12px; margin-top:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${m.title}</div>
+                        `;
+                        div.onclick = () => tg.sendData(m.code);
+                        searchGrid.appendChild(div);
+                    });
+
+                } catch (e) { console.error(e); }
+            }, 600);
         }
 
-        setupUser();
-        fetchData();
+        initApp();
+
     </script>
 </body>
 </html>
-
