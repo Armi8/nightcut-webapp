@@ -3,239 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NightCut UI</title>
+    <title>NightCut Stream</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* --- تنظیمات کلی و ریست --- */
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
         body {
-            /* گرادینت پس‌زمینه جذاب */
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            color: #ffffff;
-            font-family: 'Vazirmatn', sans-serif; /* فونت وزیر */
+            background-color: #0f1014;
+            color: #fff;
+            font-family: 'Vazirmatn', sans-serif;
             margin: 0;
-            padding: 15px;
-            min-height: 100vh;
-        }
-
-        /* --- هدر --- */
-        .header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-top: 10px;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 24px;
-            background: linear-gradient(to right, #ff416c, #ff4b2b);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-            letter-spacing: 1px;
-        }
-        .header p {
-            font-size: 12px;
-            color: #aaa;
-            margin-top: 5px;
-        }
-
-        /* --- گرید فیلم‌ها --- */
-        .movie-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr); /* دو ستون */
-            gap: 15px;
             padding-bottom: 40px;
         }
 
-        /* --- کارت فیلم (استایل شیشه‌ای) --- */
-        .movie-card {
-            background: rgba(255, 255, 255, 0.05); /* شیشه‌ای */
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            position: relative;
-        }
-
-        /* انیمیشن هاور (فقط برای دسکتاپ تاثیر داره) */
-        .movie-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-            border-color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* کانتینر عکس */
-        .image-container {
-            position: relative;
-            width: 100%;
-            padding-top: 150%; /* نسبت تصویر 2:3 */
-            overflow: hidden;
-        }
-
-        .image-container img {
-            position: absolute;
+        /* --- نوار جستجو (Sticky) --- */
+        .search-container {
+            position: sticky;
             top: 0;
+            z-index: 100;
+            background: rgba(15, 16, 20, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .search-input {
+            width: 100%;
+            background: #222328;
+            border: 1px solid #333;
+            padding: 12px 45px 12px 15px;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+            font-size: 14px;
+            transition: 0.3s;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'%3E%3C/circle%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'%3E%3C/line%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+        }
+        .search-input:focus {
+            border-color: #e50914;
+            background: #2a2b30;
+        }
+
+        /* --- بنر ویژه (Hero) --- */
+        .hero-section {
+            position: relative;
+            height: 350px;
+            overflow: hidden;
+            display: none; /* اول مخفیه تا دیتا بیاد */
+        }
+        .hero-bg {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+        }
+        .hero-content {
+            position: absolute;
+            bottom: 20px;
             left: 0;
+            width: 100%;
+            padding: 20px;
+            background: linear-gradient(to top, #0f1014 10%, transparent);
+            text-align: center;
+        }
+        .hero-tag {
+            background: #e50914;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        .hero-title {
+            font-size: 28px;
+            font-weight: 900;
+            margin: 10px 0;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+        .hero-btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* --- لیست فیلم‌ها --- */
+        .section-title {
+            padding: 0 20px;
+            margin-top: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #ccc;
+            border-left: 3px solid #e50914;
+            margin-left: 15px;
+        }
+        
+        .movie-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* ۳ ستون برای تراکم بیشتر */
+            gap: 10px;
+            padding: 15px;
+        }
+        
+        @media (max-width: 360px) {
+            .movie-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        .movie-card {
+            position: relative;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .movie-card:active { transform: scale(0.95); }
+        
+        .poster-wrapper {
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            aspect-ratio: 2/3;
+            background: #1f2024;
+        }
+        .poster-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
         }
-
-        /* بج امتیاز */
-        .vote-badge {
+        .rating-badge {
             position: absolute;
-            top: 8px;
-            left: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            color: #ffd700;
-            padding: 4px 8px;
-            border-radius: 8px;
-            font-size: 12px;
+            top: 5px;
+            right: 5px;
+            background: rgba(0,0,0,0.8);
+            color: #46d369;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
             font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 4px;
             backdrop-filter: blur(4px);
         }
-
-        /* اطلاعات پایین کارت */
-        .card-content {
-            padding: 12px;
-            text-align: left; /* چپ‌چین برای انگلیسی */
-            direction: ltr;
-        }
-
-        .movie-title {
-            font-size: 14px;
-            font-weight: 700;
-            margin-bottom: 8px;
+        .movie-name {
+            font-size: 11px;
+            margin-top: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            color: #eee;
-        }
-
-        /* دکمه دانلود */
-        .btn-dl {
-            width: 100%;
-            padding: 10px;
-            border: none;
-            border-radius: 12px;
-            background: linear-gradient(to right, #e50914, #ff4b2b);
-            color: white;
-            font-weight: bold;
-            font-size: 13px;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
-            transition: transform 0.1s, opacity 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .btn-dl:active {
-            transform: scale(0.95);
-            opacity: 0.9;
-        }
-
-        /* لودینگ */
-        #loading {
+            color: #ddd;
             text-align: center;
-            margin-top: 50px;
-            font-size: 14px;
+        }
+
+        /* --- دکمه لود بیشتر --- */
+        .load-more-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .btn-load-more {
+            background: #1f2024;
+            border: 1px solid #333;
             color: #aaa;
-            animation: pulse 1.5s infinite;
+            padding: 10px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
         }
-
-        @keyframes pulse {
-            0% { opacity: 0.6; }
-            50% { opacity: 1; }
-            100% { opacity: 0.6; }
-        }
-
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>NIGHT CUT</h1>
-        <p>Your Movie Collection</p>
+    <div class="search-container">
+        <input type="text" class="search-input" id="searchInput" placeholder="جستجوی فیلم و سریال..." oninput="handleSearch()">
     </div>
 
-    <div id="loading">✨ در حال دریافت فیلم‌ها...</div>
+    <div class="hero-section" id="hero">
+        <img class="hero-bg" id="hero-img" src="">
+        <div class="hero-content">
+            <span class="hero-tag">پیشنهاد ویژه 🔥</span>
+            <div class="hero-title" id="hero-title"></div>
+            <button class="hero-btn" id="hero-btn">دانلود و تماشا</button>
+        </div>
+    </div>
+
+    <div class="section-title">تازه‌های ربات</div>
     <div class="movie-grid" id="container"></div>
+
+    <div class="load-more-container">
+        <button class="btn-load-more" id="loadMoreBtn" onclick="fetchMovies()">نمایش بیشتر 👇</button>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.enableClosingConfirmation(); // جلوگیری از بسته شدن یهویی
+        tg.setHeaderColor('#0f1014'); // رنگ هدر تلگرام رو مشکی میکنه
 
-        // 🔥🔥🔥 لینک کلادفلر خودت رو اینجا بذار 🔥🔥🔥
+        // 🔥🔥🔥 لینک کلادفلر خودت رو بذار 🔥🔥🔥
         const API_URL = "https://internationally-provinces-corp-intellectual.trycloudflare.com"; 
 
-        async function fetchMovies() {
+        let currentPage = 1;
+        let isSearching = false;
+        let searchTimeout = null;
+
+        async function fetchMovies(reset = false) {
+            const btn = document.getElementById('loadMoreBtn');
+            btn.innerText = "⏳ ...";
+
+            if (reset) {
+                document.getElementById('container').innerHTML = '';
+                currentPage = 1;
+            }
+
             try {
-                const response = await fetch(`${API_URL}/api/movies`);
+                // اگر داریم سرچ میکنیم، پارامتر q میفرستیم، وگرنه page
+                const query = document.getElementById('searchInput').value;
+                let url = `${API_URL}/api/movies?page=${currentPage}`;
+                if (query) {
+                    url = `${API_URL}/api/movies?q=${query}`;
+                    isSearching = true;
+                } else {
+                    isSearching = false;
+                }
+
+                const response = await fetch(url);
                 const movies = await response.json();
 
-                document.getElementById('loading').style.display = 'none';
-                const container = document.getElementById('container');
+                btn.innerText = "نمایش بیشتر 👇";
 
                 if (movies.length === 0) {
-                    container.innerHTML = '<p style="grid-column: span 2; text-align:center;">هنوز فیلمی اضافه نشده است.</p>';
+                    btn.style.display = 'none';
+                    if (reset) document.getElementById('container').innerHTML = '<p style="text-align:center; width:100%; color:#555;">یافت نشد.</p>';
                     return;
                 }
 
-                movies.forEach((movie, index) => {
-                    const card = document.createElement('div');
-                    card.className = 'movie-card';
-                    
-                    // انیمیشن ورودی (کارت‌ها یکی‌یکی میان)
-                    card.style.animation = `fadeIn 0.5s ease forwards ${index * 0.1}s`;
-                    card.style.opacity = '0'; // اول مخفی باشه تا انیمیشن شروع شه
+                // اگر صفحه اول هستیم و سرچ نمیکنیم، فیلم اول رو ببر تو بنر (Hero)
+                if (currentPage === 1 && !isSearching && movies.length > 0) {
+                    setupHero(movies[0]);
+                    // بقیه فیلم‌ها رو توی گرید نشون بده (از دومی شروع کن)
+                    renderGrid(movies.slice(1)); 
+                } else {
+                    renderGrid(movies);
+                }
 
-                    card.innerHTML = `
-                        <div class="image-container">
-                            <img src="${movie.poster}" loading="lazy" onerror="this.src='https://via.placeholder.com/500x750?text=No+Img'">
-                            <div class="vote-badge">⭐ ${movie.vote}</div>
-                        </div>
-                        <div class="card-content">
-                            <div class="movie-title">${movie.title}</div>
-                            <button class="btn-dl" onclick="selectMovie('${movie.code}')">
-                                <span>دانلود</span>
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                            </button>
-                        </div>
-                    `;
-                    container.appendChild(card);
-                });
+                currentPage++;
+
+                // اگر سرچ کردیم، دکمه "بیشتر" رو مخفی کن (چون API سرچمون فعلا صفحه بندی نداره تو این نسخه ساده)
+                if (isSearching) {
+                    btn.style.display = 'none';
+                    document.getElementById('hero').style.display = 'none'; // بنر رو مخفی کن موقع سرچ
+                } else {
+                    btn.style.display = 'block';
+                    document.getElementById('hero').style.display = 'block';
+                }
 
             } catch (error) {
-                document.getElementById('loading').innerHTML = "❌ خطا در اتصال.<br>لطفاً API را چک کنید.";
+                btn.innerText = "❌ خطا";
             }
         }
 
-        function selectMovie(code) {
-            // ویبره کوچیک موقع کلیک (Haptic Feedback)
-            tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(code);
+        function setupHero(movie) {
+            const hero = document.getElementById('hero');
+            hero.style.display = 'block';
+            document.getElementById('hero-img').src = movie.poster;
+            document.getElementById('hero-title').innerText = movie.title;
+            document.getElementById('hero-btn').onclick = () => tg.sendData(movie.code);
         }
 
-        // اضافه کردن انیمیشن فیدین به CSS بصورت داینامیک
-        const styleSheet = document.createElement("style");
-        styleSheet.innerText = `
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(20px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-        `;
-        document.head.appendChild(styleSheet);
+        function renderGrid(movies) {
+            const container = document.getElementById('container');
+            movies.forEach(movie => {
+                const card = document.createElement('div');
+                card.className = 'movie-card';
+                card.onclick = () => {
+                    tg.HapticFeedback.impactOccurred('light');
+                    tg.sendData(movie.code);
+                };
+                
+                card.innerHTML = `
+                    <div class="poster-wrapper">
+                        <img class="poster-img" src="${movie.poster}" loading="lazy">
+                        <div class="rating-badge">${movie.vote}</div>
+                    </div>
+                    <div class="movie-name">${movie.title}</div>
+                `;
+                container.appendChild(card);
+            });
+        }
 
-        fetchMovies();
+        function handleSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                fetchMovies(true); // ریست کردن لیست
+            }, 600);
+        }
+
+        // شروع
+        fetchMovies(true);
     </script>
 
 </body>
