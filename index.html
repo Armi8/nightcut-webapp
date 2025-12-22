@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NightCut Video UI</title>
+    <title>NightCut Native</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
@@ -11,12 +11,8 @@
     <style>
         :root {
             --bg: #0f1014;
-            --card-bg: #1a1b1f;
             --text: #ffffff;
             --text-muted: #8e929b;
-            --primary: #2ecc71; /* سبز مشابه ویدیو */
-            --accent-blue: #3498db;
-            --accent-purple: #9b59b6;
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
@@ -26,101 +22,66 @@
             color: var(--text);
             font-family: 'Vazirmatn', sans-serif;
             margin: 0;
-            padding-bottom: 80px; /* جا برای نویگیشن پایین */
+            padding-bottom: 50px;
             overflow-x: hidden;
         }
 
-        /* --- هدر (پروفایل و منو) --- */
+        /* --- هدر پروفایل --- */
         .header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 20px;
+            padding: 20px 20px 10px 20px; /* پدینگ پایین کمتر شد چون بنر رفت */
         }
         .user-profile {
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; gap: 12px;
         }
         .avatar {
-            width: 45px; height: 45px; border-radius: 50%;
-            object-fit: cover; border: 2px solid #333;
+            width: 50px; height: 50px; border-radius: 50%;
+            object-fit: cover; border: 2px solid #222;
+            background: #222;
         }
+        .welcome-text { font-size: 11px; color: var(--text-muted); }
+        .username-text { font-size: 16px; font-weight: 800; }
+
         .menu-btn {
-            width: 40px; height: 40px; background: #222;
+            width: 40px; height: 40px; background: #1a1b1f;
             border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 20px; color: white; cursor: pointer;
+            font-size: 22px; cursor: pointer; color: white;
         }
 
-        /* --- بنر پرمیوم (سبز) --- */
-        .premium-banner {
-            margin: 0 20px 25px 20px;
-            background: linear-gradient(135deg, #1e3c2f, #111);
-            border-radius: 20px;
-            padding: 20px;
-            position: relative;
-            overflow: hidden;
-            border: 1px solid #2ecc7133;
-        }
-        .premium-content h3 { margin: 0 0 5px 0; font-size: 16px; width: 70%; }
-        .premium-content p { margin: 0 0 15px 0; font-size: 12px; color: #aaa; width: 60%; }
-        .btn-premium {
-            background: var(--primary); color: #000; border: none;
-            padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 12px;
-        }
-        .banner-img-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: url('https://image.tmdb.org/t/p/w500/u3bZgnGQ9TWA75dAQvpBF08f2AC.jpg') center/cover;
-            opacity: 0.2; pointer-events: none; z-index: 0;
-        }
-
-        /* --- سکشن‌ها --- */
+        /* --- استایل‌های سکشن --- */
         .section-header {
             display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 0 20px; margin-bottom: 15px;
+            padding: 0 20px; margin-bottom: 15px; margin-top: 20px;
         }
         .section-title { font-size: 20px; font-weight: 800; }
         .view-all { font-size: 12px; color: var(--text-muted); text-decoration: none; }
 
-        /* --- اسلایدر افقی (Popular) --- */
+        /* --- اسلایدر افقی --- */
         .scroll-container {
             display: flex; gap: 20px; overflow-x: auto;
-            padding: 0 20px 30px 20px; /* پدینگ پایین برای سایه */
+            padding: 0 20px 30px 20px;
             scroll-snap-type: x mandatory;
         }
         .scroll-container::-webkit-scrollbar { display: none; }
 
         .movie-card-large {
-            flex: 0 0 240px; /* عرض ثابت کارت */
-            position: relative;
-            border-radius: 24px;
-            overflow: visible; /* برای اینکه سایه بیرون بزنه */
+            flex: 0 0 240px; position: relative;
             scroll-snap-align: center;
         }
 
         .poster-container {
             width: 100%; aspect-ratio: 2/3;
-            border-radius: 24px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5); /* سایه عمیق */
+            border-radius: 24px; overflow: hidden; position: relative;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-        
         .poster-img { width: 100%; height: 100%; object-fit: cover; }
-        
-        /* گرادینت روی عکس */
         .poster-overlay {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(to top, rgba(0,0,0,0.9) 10%, transparent 60%);
-        }
-
-        .fav-icon {
-            position: absolute; top: 15px; right: 15px;
-            background: rgba(255,255,255,0.2); backdrop-filter: blur(5px);
-            width: 32px; height: 32px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 14px; color: white;
+            background: linear-gradient(to top, rgba(0,0,0,0.95) 15%, transparent 60%);
         }
 
         .card-info {
-            position: absolute; bottom: 15px; left: 15px; right: 15px;
-            z-index: 2;
+            position: absolute; bottom: 15px; left: 15px; right: 15px; z-index: 2;
         }
         .movie-title { font-size: 18px; font-weight: bold; margin-bottom: 5px; text-shadow: 0 2px 4px black; }
         
@@ -135,16 +96,14 @@
         .tag.blue { background: rgba(52, 152, 219, 0.3); color: #85c1e9; }
         .tag.purple { background: rgba(155, 89, 182, 0.3); color: #d7bde2; }
 
-        /* --- لیست عمودی (New) --- */
+        /* --- لیست عمودی --- */
         .vertical-list { padding: 0 20px; display: flex; flex-direction: column; gap: 15px; }
         
         .movie-card-small {
             display: flex; gap: 15px; align-items: center;
             background: #15161a; padding: 10px; border-radius: 16px;
         }
-        .small-poster {
-            width: 70px; height: 70px; border-radius: 12px; object-fit: cover;
-        }
+        .small-poster { width: 70px; height: 70px; border-radius: 12px; object-fit: cover; }
         .small-info { flex: 1; }
         .small-title { font-size: 14px; font-weight: bold; margin-bottom: 4px; }
         .small-meta { font-size: 11px; color: var(--text-muted); }
@@ -153,37 +112,27 @@
             display: flex; align-items: center; justify-content: center; color: var(--text-muted);
         }
 
-        /* --- لودینگ --- */
-        .skeleton { background: #222; width: 100%; height: 100%; animation: pulse 1.5s infinite; }
+        /* لودینگ */
+        .skeleton { background: #222; width: 100%; height: 100%; animation: pulse 1.5s infinite; border-radius: inherit; }
         @keyframes pulse { 0% {opacity: 0.5;} 50% {opacity: 1;} 100% {opacity: 0.5;} }
-
     </style>
 </head>
 <body>
 
     <div class="header">
         <div class="user-profile">
-            <img src="https://ui-avatars.com/api/?name=User&background=random" class="avatar" id="userAvatar">
-            <div style="font-size: 14px;">
-                <div style="color:#777; font-size: 11px;">Welcome Back</div>
-                <div id="userName" style="font-weight:bold;">User</div>
+            <img src="" class="avatar" id="userAvatar">
+            <div>
+                <div class="welcome-text">خوش اومدی 👋</div>
+                <div class="username-text" id="userName">کاربر مهمان</div>
             </div>
         </div>
         <div class="menu-btn"><i class="bi bi-list"></i></div>
     </div>
 
-    <div class="premium-banner">
-        <div class="banner-img-overlay"></div>
-        <div class="premium-content" style="position: relative; z-index: 1;">
-            <h3>Watch favorite movies without any ads</h3>
-            <p>Only $4.99/month</p>
-            <button class="btn-premium">Get Premium</button>
-        </div>
-    </div>
-
     <div class="section-header">
-        <div class="section-title">Popular</div>
-        <a href="#" class="view-all">View all</a>
+        <div class="section-title">محبوب‌ترین‌ها</div>
+        <a href="#" class="view-all">مشاهده همه</a>
     </div>
 
     <div class="scroll-container" id="popularContainer">
@@ -191,69 +140,77 @@
         <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
     </div>
 
-    <div class="section-header" style="margin-top: 20px;">
-        <div class="section-title">New</div>
-        <a href="#" class="view-all">View all</a>
+    <div class="section-header">
+        <div class="section-title">تازه‌ها</div>
+        <a href="#" class="view-all">مشاهده همه</a>
     </div>
 
     <div class="vertical-list" id="newContainer">
         <div class="skeleton" style="height: 80px; border-radius: 16px;"></div>
+        <div class="skeleton" style="height: 80px; border-radius: 16px; margin-top:10px;"></div>
     </div>
-
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#0f1014'); // رنگ هدر مشکی
-
-        // گرفتن اطلاعات کاربر از تلگرام
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('userName').innerText = user.first_name;
-            if(user.photo_url) document.getElementById('userAvatar').src = user.photo_url;
-        }
+        tg.setHeaderColor('#0f1014');
 
         // 🔥🔥🔥 لینک کلادفلر خودت رو بذار 🔥🔥🔥
         const API_URL = "https://baths-differ-yourself-poll.trycloudflare.com";
 
+        // --- تنظیم اطلاعات کاربر ---
+        function setupUser() {
+            // آواتار پیش‌فرض
+            let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=random";
+            let name = "کاربر عزیز";
+
+            // دریافت از تلگرام
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                const u = tg.initDataUnsafe.user;
+                
+                // ترکیب نام و نام خانوادگی
+                name = u.first_name + (u.last_name ? " " + u.last_name : "");
+                
+                // اگر عکس داشت استفاده کن، وگرنه آواتار با حروف اسمش بساز
+                if (u.photo_url) {
+                    avatarUrl = u.photo_url;
+                } else {
+                    avatarUrl = `https://ui-avatars.com/api/?name=${name}&background=random&color=fff`;
+                }
+            }
+
+            document.getElementById('userName').innerText = name;
+            document.getElementById('userAvatar').src = avatarUrl;
+        }
+
         async function fetchData() {
             try {
-                // 1. دریافت فیلم‌های محبوب (Popular)
-                // برای تنوع، از API میگیم صفحه 1 رو بده
                 const resPop = await fetch(`${API_URL}/api/movies?page=1`);
                 const popularMovies = await resPop.json();
                 renderPopular(popularMovies);
 
-                // 2. دریافت فیلم‌های جدید (New)
-                // از API میگیم صفحه 2 رو بده (که تکراری نباشه)
                 const resNew = await fetch(`${API_URL}/api/movies?page=2`);
                 const newMovies = await resNew.json();
                 renderNew(newMovies);
-
-            } catch (e) {
-                console.error("Error:", e);
-            }
+            } catch (e) { console.error(e); }
         }
 
         function renderPopular(movies) {
             const container = document.getElementById('popularContainer');
             container.innerHTML = '';
-
             movies.forEach(m => {
-                // ژانرهای رندوم برای قشنگی (چون تو دیتابیس فعلی نداریم)
-                const genres = ["Adventure", "Fantasy", "Action"];
-                const randomGenre1 = genres[Math.floor(Math.random() * genres.length)];
-                const randomGenre2 = genres[Math.floor(Math.random() * genres.length)];
+                const genres = ["اکشن", "درام", "علمی تخیلی"];
+                const g1 = genres[Math.floor(Math.random()*genres.length)];
+                const g2 = genres[Math.floor(Math.random()*genres.length)];
 
                 const card = document.createElement('div');
                 card.className = 'movie-card-large';
-                card.onclick = () => tg.sendData(m.code);
+                card.onclick = () => { tg.HapticFeedback.impactOccurred('medium'); tg.sendData(m.code); };
 
                 card.innerHTML = `
                     <div class="poster-container">
                         <img src="${m.poster}" class="poster-img">
                         <div class="poster-overlay"></div>
-                        <div class="fav-icon"><i class="bi bi-heart"></i></div>
                         
                         <div class="card-info">
                             <div class="movie-title">${m.title}</div>
@@ -262,8 +219,8 @@
                                 <span>${m.vote}</span>
                             </div>
                             <div class="tags">
-                                <span class="tag blue">${randomGenre1}</span>
-                                <span class="tag purple">${randomGenre2}</span>
+                                <span class="tag blue">${g1}</span>
+                                <span class="tag purple">${g2}</span>
                             </div>
                         </div>
                     </div>
@@ -275,17 +232,16 @@
         function renderNew(movies) {
             const container = document.getElementById('newContainer');
             container.innerHTML = '';
-
-            movies.slice(0, 5).forEach(m => { // فقط 5 تای اول
+            movies.slice(0, 10).forEach(m => {
                 const card = document.createElement('div');
                 card.className = 'movie-card-small';
-                card.onclick = () => tg.sendData(m.code);
+                card.onclick = () => { tg.HapticFeedback.impactOccurred('light'); tg.sendData(m.code); };
 
                 card.innerHTML = `
                     <img src="${m.poster}" class="small-poster">
                     <div class="small-info">
                         <div class="small-title">${m.title}</div>
-                        <div class="small-meta">Season 1 • Episode ${Math.floor(Math.random() * 10) + 1}</div>
+                        <div class="small-meta">کیفیت بالا • زیرنویس فارسی</div>
                     </div>
                     <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
                 `;
@@ -293,8 +249,8 @@
             });
         }
 
+        setupUser();
         fetchData();
-
     </script>
 </body>
 </html>
