@@ -347,4 +347,286 @@
         const [g1,g2] = pickGenres(m.genres);
         const card = document.createElement('div');
         card.className = 'movie-card-large';
-        card.onclick = () => openDet
+        card.onclick = () => openDetail(m.code);
+        card.innerHTML = `
+          <div class="poster-container">
+            <img src="${m.poster}" class="poster-img" loading="lazy" alt="${safeText(m.title)}">
+            <div class="poster-overlay"></div>
+            <div class="card-info">
+              <div class="movie-title">${safeText(m.title)}</div>
+              <div class="rating-row">
+                <span class="star"><i class="bi bi-star-fill"></i></span>
+                <span>${m.vote ?? 0}</span>
+                ${m.year ? `<span style="color:var(--muted);font-weight:700">• ${safeText(m.year)}</span>` : ``}
+              </div>
+              <div class="tags">
+                <span class="tag">${safeText(g1)}</span>
+                <span class="tag">${safeText(g2)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function renderNew(items, append=false) {
+      const container = document.getElementById('newContainer');
+      if (!append) container.innerHTML = "";
+      if (!items || !items.length) {
+        if (!append) container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">موردی برای نمایش نیست.</div>`;
+        return;
+      }
+      items.forEach(m => {
+        const [g1,g2] = pickGenres(m.genres);
+        const card = document.createElement('div');
+        card.className = 'movie-card-small';
+        card.onclick = () => openDetail(m.code);
+        card.innerHTML = `
+          <img src="${m.poster}" class="small-poster" loading="lazy" alt="${safeText(m.title)}">
+          <div class="small-info">
+            <div class="small-title">${safeText(m.title)}</div>
+            <div class="small-meta">
+              <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote ?? 0}</span>
+              ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(m.year)}</span>` : ``}
+              <span class="chip"><i class="bi bi-tags"></i> ${safeText(g1)}</span>
+              <span class="chip"><i class="bi bi-badge-hd"></i> ${safeText(g2)}</span>
+            </div>
+          </div>
+          <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function fetchPopular() {
+      try {
+        const res = await fetch(`${API_URL}/api/top?limit=10`);
+        const data = await res.json();
+        renderPopular(data);
+      } catch (e) { console.error(e); }
+    }
+
+    async function fetchNew(reset=true) {
+      try {
+        if (reset) {
+          currentPage = 1;
+          loadingMore = false;
+          document.getElementById('btnLoadMore').disabled = true;
+          document.getElementById('newContainer').innerHTML = `
+            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+          `;
+        }
+
+        const url = new URL(`${API_URL}/api/movies`);
+        url.searchParams.set("page", String(currentPage));
+        url.searchParams.set("limit", String(limit));
+        if (currentType) url.searchParams.set("type", currentType);
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        totalPages = data.total_pages || 1;
+
+        renderNew(data.items || [], !reset);
+
+        const btn = document.getElementById('btnLoadMore');
+        btn.disabled = (currentPage >= totalPages);
+        btn.innerText = (currentPage >= totalPages) ? "پایان لیست" : "نمایش بیشتر";
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadMore() {
+      if (loadingMore) return;
+      if (currentPage >= totalPages) return;
+      loadingMore = true;
+      currentPage += 1;
+      await fetchNew(false);
+      loadingMore = false;
+    }
+
+    function setActiveTab(type) {
+      currentType = type;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+      const title = document.getElementById('newTitle');
+      title.innerText = type === "movie" ? "تازه‌های فیلم" : type === "series" ? "تازه‌های سریال" : "تازه‌ها";
+      fetchNew(true);
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => setActiveTab(tab.dataset.type));
+    });
+
+    document.getElementById('refreshPopular').addEventListener('click', (e) => { e.preventDefault(); fetchPopular(); });
+    document.getElementById('refreshNew').addEventListener('click', (e) => { e.preventDefault(); fetchNew(true); });
+    document.getElementById('btnLoadMore').addEventListener('click', loadMore);
+
+    // ===== DETAIL VIEW =====
+    async function openDetail(code){
+      haptic('medium');
+      currentDetailCode = code;
+      detailStack = []; // reset navigation stack
+      showPage('pageDetail');
+
+      // skeleton
+      document.getElementById('detailCover').innerHTML = `<div class="skeleton" style="width:100%;height:100%"></div>`;
+      document.getElementById('detailTitle').innerText = "در حال بارگذاری...";
+      document.getElementById('detailMeta').innerHTML = "";
+      document.getElementById('detailOverview').innerText = "";
+      document.getElementById('treeBox').innerHTML = `<div class="skeleton" style="height: 120px; border-radius: 18px;"></div>`;
+      document.getElementById('treeHint').innerText = "";
+
+      try{
+        const [cRes, tRes] = await Promise.all([
+          fetch(`${API_URL}/api/content/${code}`),
+          fetch(`${API_URL}/api/content/${code}/tree`)
+        ]);
+        const content = await cRes.json();
+        const treePayload = await tRes.json();
+
+        // render content
+        document.getElementById('detailCover').innerHTML = `<img src="${content.poster}" alt="${safeText(content.title)}">`;
+        document.getElementById('detailTitle').innerText = content.title;
+
+        const typeText = content.type === 'series' ? 'سریال' : 'فیلم';
+        document.getElementById('detailType').innerText = typeText;
+
+        let meta = `
+          <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${content.vote ?? 0}</span>
+          ${content.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(content.year)}</span>` : ``}
+        `;
+        if (content.genres) meta += `<span class="chip"><i class="bi bi-tags"></i> ${safeText(content.genres.split(",")[0] || "")}</span>`;
+        document.getElementById('detailMeta').innerHTML = meta;
+
+        const ov = (content.overview || "").trim();
+        document.getElementById('detailOverview').innerText = ov ? ov : "خلاصه‌ای برای این عنوان ثبت نشده.";
+
+        // store root nodes
+        detailStack = [{ title: "ریشه", nodes: treePayload.tree || [] }];
+        renderTreeLevel();
+
+      }catch(e){
+        console.error(e);
+        document.getElementById('treeBox').innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">خطا در اتصال به سرور.</div>`;
+      }
+    }
+
+    function renderTreeLevel(){
+      const box = document.getElementById('treeBox');
+      const hint = document.getElementById('treeHint');
+      const level = detailStack[detailStack.length - 1];
+      const nodes = level.nodes || [];
+
+      hint.innerText = detailStack.length > 1 ? `سطح ${detailStack.length-1}` : "";
+
+      if (!nodes.length){
+        box.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">چیزی برای نمایش نیست.</div>`;
+        return;
+      }
+
+      box.innerHTML = "";
+
+      // اگر داخل فولدر هستیم، دکمه برگشت داخل باکس هم بده
+      if (detailStack.length > 1){
+        const backNode = document.createElement('div');
+        backNode.className = "node";
+        backNode.onclick = () => { haptic('light'); detailStack.pop(); renderTreeLevel(); };
+        backNode.innerHTML = `
+          <div class="node-left">
+            <i class="bi bi-arrow-right"></i>
+            <div class="node-text">بازگشت</div>
+          </div>
+          <div class="node-right">..</div>
+        `;
+        box.appendChild(backNode);
+      }
+
+      nodes.forEach(n => {
+        const isFolder = n.media_type === "folder";
+        const nodeEl = document.createElement('div');
+        nodeEl.className = "node";
+        nodeEl.onclick = () => {
+          if (isFolder){
+            haptic('light');
+            detailStack.push({ title: n.text, nodes: n.children || [] });
+            renderTreeLevel();
+          } else {
+            // ✅ دانلود: variation_id به ربات
+            haptic('medium');
+            tg.sendData(`GET:${n.id}`);
+          }
+        };
+
+        nodeEl.innerHTML = `
+          <div class="node-left">
+            <i class="bi ${isFolder ? 'bi-folder2-open' : 'bi-download'}"></i>
+            <div class="node-text">${safeText(n.text)}</div>
+          </div>
+          <div class="node-right">${isFolder ? 'باز کن' : 'دانلود'}</div>
+        `;
+        box.appendChild(nodeEl);
+      });
+    }
+
+    document.getElementById('detailBack').addEventListener('click', () => {
+      haptic('light');
+      showPage('pageHome');
+      currentDetailCode = null;
+      detailStack = [];
+    });
+
+    // ===== Bottom nav =====
+    function setNavActive(id) {
+      document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    document.getElementById('navHome').addEventListener('click', () => {
+      setNavActive('navHome');
+      showPage('pageHome');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('navTop').addEventListener('click', () => {
+      setNavActive('navTop');
+      showPage('pageHome');
+      document.querySelector('#popularContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('navNew').addEventListener('click', () => {
+      setNavActive('navNew');
+      showPage('pageHome');
+      document.querySelector('#newContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('navBack').addEventListener('click', () => {
+      haptic('light');
+      if (document.getElementById('pageDetail').classList.contains('active')){
+        showPage('pageHome');
+        currentDetailCode = null;
+        detailStack = [];
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    // Header buttons
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      haptic('light');
+      fetchPopular();
+      fetchNew(true);
+    });
+
+    document.getElementById('btnMenu').addEventListener('click', () => {
+      haptic('light');
+      tg.showPopup({
+        title: "NightCut",
+        message: "بعداً می‌تونی اینجا تنظیمات / راهنما / پروفایل اضافه کنی.",
+        buttons: [{ id: "ok", type: "ok", text: "باشه" }]
+      });
+    });
+
+    // Init
+    setupUser();
+    fetchPopular();
+    fetchNew(true);
+  </script>
+</body>
+</html>
