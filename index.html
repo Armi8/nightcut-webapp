@@ -160,29 +160,42 @@
 
         // --- تنظیم اطلاعات کاربر ---
         function setupUser() {
-            // آواتار پیش‌فرض
+            // آواتار و نام پیش‌فرض
             let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=random";
-            let name = "کاربر عزیز";
+            let name = "کاربر مهمان";
 
-            // دریافت از تلگرام
+            // بررسی می‌کنیم آیا اصلاً تلگرام اطلاعاتی فرستاده یا نه
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 const u = tg.initDataUnsafe.user;
                 
-                // ترکیب نام و نام خانوادگی
-                name = u.first_name + (u.last_name ? " " + u.last_name : "");
-                
-                // اگر عکس داشت استفاده کن، وگرنه آواتار با حروف اسمش بساز
+                // 1. گرفتن نام
+                if (u.first_name) {
+                    name = u.first_name + (u.last_name ? " " + u.last_name : "");
+                } else if (u.username) {
+                    name = u.username;
+                }
+
+                // 2. گرفتن عکس (با هندل کردن حالت‌های مختلف)
                 if (u.photo_url) {
                     avatarUrl = u.photo_url;
                 } else {
-                    avatarUrl = `https://ui-avatars.com/api/?name=${name}&background=random&color=fff`;
+                    // اگر عکس نداشت یا تلگرام نفرستاد، با حروف اول اسمش آواتار میسازیم
+                    // از background=222 استفاده میکنیم که دارک باشه
+                    avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=222&color=fff&size=128`;
                 }
+
+                console.log("User found:", u); // برای دیباگ
+
+            } else {
+                // اگر اطلاعات نیومد، یه پیام موقت نشون بده (فقط برای تست خودت)
+                // بعد از اینکه مطمئن شدی کار میکنه این خط رو پاک کن
+               // alert("اطلاعات کاربر دریافت نشد! حتما از داخل ربات باز کنید.");
             }
 
+            // اعمال در HTML
             document.getElementById('userName').innerText = name;
             document.getElementById('userAvatar').src = avatarUrl;
         }
-
         async function fetchData() {
             try {
                 const resPop = await fetch(`${API_URL}/api/movies?page=1`);
@@ -254,3 +267,4 @@
     </script>
 </body>
 </html>
+
