@@ -263,7 +263,7 @@
         <div class="icon-btn" id="btnMenu" title="منو"><i class="bi bi-list"></i></div>
     </div>
 
-    <!-- Search -->
+    <!-- ✅ Search (درست داخل header) -->
     <div id="searchContainer" class="search-wrap">
         <div class="search-box">
         <i class="bi bi-search search-ico"></i>
@@ -273,7 +273,7 @@
         </button>
         </div>
     </div>
-    
+    </div>
 
 
   <!-- HOME PAGE -->
@@ -291,7 +291,8 @@
     </div>
 
     <div class="scroll-container" id="popularContainer">
-      <!-- skeletons -->
+      <div class="movie-card-large"><div class="poster-container"><div class="skeleton" style="width:100%;height:100%"></div></div></div>
+      <div class="movie-card-large"><div class="poster-container"><div class="skeleton" style="width:100%;height:100%"></div></div></div>
     </div>
 
     <div class="section-header">
@@ -300,7 +301,8 @@
     </div>
 
     <div class="vertical-list" id="newContainer">
-      <!-- items -->
+      <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+      <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
     </div>
 
     <div class="load-more-wrap">
@@ -318,7 +320,7 @@
 
     <div class="detail-hero">
       <div class="detail-cover" id="detailCover">
-        <!-- poster -->
+        <div class="skeleton" style="width:100%;height:100%"></div>
       </div>
 
       <div class="detail-title" id="detailTitle">...</div>
@@ -332,7 +334,7 @@
         <div style="color:var(--muted);font-size:12px" id="treeHint"></div>
       </div>
       <div class="tree-box" id="treeBox">
-        <!-- tree nodes -->
+        <div class="skeleton" style="height: 120px; border-radius: 18px;"></div>
       </div>
     </div>
   </div>
@@ -350,320 +352,463 @@
     tg.expand();
     tg.setHeaderColor('#0f1014');
 
+    // ✅ دریافت آدرس API
     const urlParams = new URLSearchParams(window.location.search);
     const API_URL = urlParams.get('api') || "http://127.0.0.1:8000";
+    console.log("Connected to API:", API_URL);
 
-    // Cache
-    const CACHE_KEY = "nightcut_cache_v2";
-    const CACHE_TTL = 600000; // 10 دقیقه
-    function getCache(key) {
-        try {
-            const data = JSON.parse(localStorage.getItem(CACHE_KEY + key) || "null");
-            if (data && Date.now() - data.ts < CACHE_TTL) return data.value;
-        } catch(e) {}
-        return null;
-    }
-    function setCache(key, value) {
-        try { localStorage.setItem(CACHE_KEY + key, JSON.stringify({value, ts: Date.now()})); } catch(e) {}
-    }
-
-    // State
+    // --- State Variables ---
     let currentType = "";
     let currentPage = 1;
+    const limit = 12;
     let totalPages = 1;
-    let loading = false;
+    let loadingMore = false;
+    
+    // Search State
+    let searchTimeout;
     let isSearching = false;
-    let searchQuery = "";
-    let searchPage = 1;
-    let searchTotalPages = 1;
-    let popularData = null;
+
+    // Detail State
     let detailStack = [];
+    let currentDetailCode = null;
 
-    // Helpers
-    const safeText = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    const haptic = t => { try { tg.HapticFeedback.impactOccurred(t||'light'); } catch(e) {} };
+    // --- Helper Functions ---
+    function safeText(s) {
+      return (s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+    }
 
-    const pickGenres = g => {
-        const arr = (g||"").split(",").map(s=>s.trim()).filter(Boolean);
-        return [arr[0]||"فیلم", arr[1]||"HD"];
-    };
+    function haptic(type='light'){
+      try { tg.HapticFeedback.impactOccurred(type); } catch(e){}
+    }
+
+    function pickGenres(genresStr) {
+      const arr = (genresStr || "").split(",").map(s => s.trim()).filter(Boolean);
+      return [arr[0] || "Movie", arr[1] || "HD"];
+    }
 
     function setupUser() {
-        let name = "کاربر عزیز";
-        let avatar = "https://ui-avatars.com/api/?name=Guest&background=111827&color=fff";
-        if (tg.initDataUnsafe?.user) {
-            const u = tg.initDataUnsafe.user;
-            name = u.first_name + (u.last_name ? " " + u.last_name : "");
-            avatar = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=111827&color=fff`;
-        }
-        document.getElementById('userName').innerText = name;
-        document.getElementById('userAvatar').src = avatar;
+      let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=111827&color=fff";
+      let name = "کاربر عزیز";
+      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        const u = tg.initDataUnsafe.user;
+        name = u.first_name + (u.last_name ? " " + u.last_name : "");
+        avatarUrl = u.photo_url ? u.photo_url : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=111827&color=fff`;
+      }
+      document.getElementById('userName').innerText = name;
+      document.getElementById('userAvatar').src = avatarUrl;
     }
 
-    // Popular
-    async function loadPopular(force=false) {
-        if (!force && popularData) { renderPopular(popularData); return; }
-        let data = getCache("popular");
-        if (!data || force) {
-            try {
-                const res = await fetch(`${API_URL}/api/top?limit=12`);
-                data = await res.json();
-                setCache("popular", data);
-            } catch(e) { console.error(e); }
-        }
-        if (data) { popularData = data; renderPopular(data); }
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
     }
 
-    function renderPopular(items) {
-        const c = document.getElementById('popularContainer');
-        c.innerHTML = "";
-        if (!items || !items.length) { c.innerHTML = "<div style='padding:20px;color:var(--muted);text-align:center'>چیزی نیست</div>"; return; }
-        items.forEach(m => {
-            const [g1,g2] = pickGenres(m.genres);
-            const el = document.createElement('div');
-            el.className = 'movie-card-large';
-            el.onclick = () => openDetail(m.code);
-            el.innerHTML = `
-                <div class="poster-container">
-                    <img src="${m.poster}" class="poster-img" loading="lazy">
-                    <div class="poster-overlay"></div>
-                    <div class="card-info">
-                        <div class="movie-title">${safeText(m.title)}</div>
-                        <div class="rating-row"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote||0} ${m.year?'• '+m.year:''}</div>
-                        <div class="tags"><span class="tag">${g1}</span><span class="tag">${g2}</span></div>
-                    </div>
-                </div>
-            `;
-            c.appendChild(el);
-        });
+    // --- Core Data Functions (Must be defined before Search Logic) ---
+    
+    function renderNew(items, append=false) {
+      const container = document.getElementById('newContainer');
+      if (!append) container.innerHTML = "";
+      if (!items || !items.length) {
+        if (!append) container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">موردی برای نمایش نیست.</div>`;
+        return;
+      }
+      items.forEach(m => {
+        const [g1,g2] = pickGenres(m.genres);
+        const card = document.createElement('div');
+        card.className = 'movie-card-small';
+        card.onclick = () => openDetail(m.code);
+        card.innerHTML = `
+          <img src="${m.poster}" class="small-poster" loading="lazy" alt="${safeText(m.title)}">
+          <div class="small-info">
+            <div class="small-title">${safeText(m.title)}</div>
+            <div class="small-meta">
+              <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote ?? 0}</span>
+              ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(m.year)}</span>` : ``}
+              <span class="chip"><i class="bi bi-tags"></i> ${safeText(g1)}</span>
+              <span class="chip"><i class="bi bi-badge-hd"></i> ${safeText(g2)}</span>
+            </div>
+          </div>
+          <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
+        `;
+        container.appendChild(card);
+      });
     }
 
-    // Main List
-    async function loadMain(reset=true) {
-        if (loading) return;
-        loading = true;
-        const page = isSearching ? searchPage : currentPage;
-        const cont = document.getElementById('newContainer');
-        const btn = document.getElementById('btnLoadMore');
-
+    async function fetchNew(reset=true) {
+      try {
         if (reset) {
-            if (isSearching) searchPage = 1; else currentPage = 1;
-            cont.innerHTML = "<div class='skeleton' style='height:86px;border-radius:18px;margin-bottom:12px'></div>".repeat(5);
+          currentPage = 1;
+          loadingMore = false;
+          document.getElementById('btnLoadMore').disabled = true;
+          document.getElementById('newContainer').innerHTML = `
+            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+          `;
+        }
+
+        const url = new URL(`${API_URL}/api/movies`);
+        url.searchParams.set("page", String(currentPage));
+        url.searchParams.set("limit", String(limit));
+        if (currentType) url.searchParams.set("type", currentType);
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        totalPages = data.total_pages || 1;
+
+        renderNew(data.items || [], !reset);
+
+        const btn = document.getElementById('btnLoadMore');
+        // در حالت سرچ دکمه "نمایش بیشتر" را مخفی نگه دار
+        if (isSearching) {
             btn.style.display = 'none';
-        }
-
-        const cacheKey = `list_${currentType}_${page}_${isSearching?searchQuery:'normal'}`;
-        let data = getCache(cacheKey);
-
-        if (!data) {
-            try {
-                const url = new URL(`${API_URL}/api/movies`);
-                url.searchParams.set("page", page);
-                url.searchParams.set("limit", 12);
-                if (currentType) url.searchParams.set("type", currentType);
-                if (isSearching && searchQuery) url.searchParams.set("q", searchQuery);
-                const res = await fetch(url);
-                data = await res.json();
-                setCache(cacheKey, data);
-            } catch(e) { console.error(e); data = null; }
-        }
-
-        if (reset) cont.innerHTML = "";
-        renderMain(data?.items || []);
-
-        const tp = data?.total_pages || 1;
-        if (isSearching) searchTotalPages = tp; else totalPages = tp;
-
-        btn.style.display = 'block';
-        btn.disabled = page >= tp;
-        btn.innerText = page >= tp ? "پایان" : "نمایش بیشتر";
-
-        loading = false;
-    }
-
-    function renderMain(items) {
-        const cont = document.getElementById('newContainer');
-        if (!items.length) {
-            cont.innerHTML += "<div style='color:var(--muted);padding:20px;text-align:center'>موردی یافت نشد</div>";
-            return;
-        }
-        items.forEach(m => {
-            const [g1,g2] = pickGenres(m.genres);
-            const el = document.createElement('div');
-            el.className = 'movie-card-small';
-            el.onclick = () => openDetail(m.code);
-            el.innerHTML = `
-                <img src="${m.poster}" class="small-poster" loading="lazy">
-                <div class="small-info">
-                    <div class="small-title">${safeText(m.title)}</div>
-                    <div class="small-meta">
-                        <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote||0}</span>
-                        ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${m.year}</span>` : ''}
-                        <span class="chip"><i class="bi bi-tags"></i> ${g1}</span>
-                    </div>
-                </div>
-                <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
-            `;
-            cont.appendChild(el);
-        });
-    }
-
-    // Search
-    const searchCont = document.getElementById('searchContainer');
-    const searchInp = document.getElementById('searchInput');
-    const clearBtn = document.getElementById('btnClearSearch');
-
-    document.getElementById('btnSearch').onclick = () => {
-        haptic();
-        const show = !searchCont.classList.contains('show');
-        searchCont.classList.toggle('show', show);
-        if (show) searchInp.focus();
-    };
-
-    clearBtn.onclick = () => { searchInp.value = ""; clearBtn.classList.remove('show'); if (isSearching) exitSearch(); };
-    searchInp.oninput = () => clearBtn.classList.toggle('show', searchInp.value.trim().length > 0);
-    searchInp.onkeydown = e => { if (e.key==='Enter' && searchInp.value.trim()) doSearch(searchInp.value.trim()); };
-
-    function doSearch(q) {
-        searchQuery = q;
-        isSearching = true;
-        document.getElementById('newTitle').innerHTML = `نتایج: <span style="color:var(--accent)">${safeText(q)}</span>`;
-        loadMain(true);
-    }
-
-    function exitSearch() {
-        isSearching = false; searchQuery = "";
-        document.getElementById('newTitle').innerText = currentType==="movie"?"تازه‌های فیلم":currentType==="series"?"تازه‌های سریال":"تازه‌ها";
-        loadMain(true);
-    }
-
-    // Tabs
-    document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
-        currentType = t.dataset.type;
-        document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x===t));
-        if (!isSearching) {
-            document.getElementById('newTitle').innerText = currentType==="movie"?"تازه‌های فیلم":currentType==="series"?"تازه‌های سریال":"تازه‌ها";
-            loadMain(true);
         } else {
-            doSearch(searchQuery);
+            btn.style.display = 'block';
+            btn.disabled = (currentPage >= totalPages);
+            btn.innerText = (currentPage >= totalPages) ? "پایان لیست" : "نمایش بیشتر";
         }
+      } catch (e) { console.error(e); }
+    }
+
+    // --- Search Logic ---
+    const searchWrap = document.getElementById('searchContainer');
+    const searchInput = document.getElementById('searchInput');
+    const btnClearSearch = document.getElementById('btnClearSearch');
+
+    function setSearchUI(open){
+      searchWrap.classList.toggle('show', open);
+      if(open){
+        searchInput.focus();
+      } else {
+        searchInput.value = "";
+        btnClearSearch.classList.remove('show');
+        // اگر قبلاً سرچ کرده بودیم و الان بستیم، برگردیم به حالت عادی
+        if(isSearching) exitSearchMode();
+      }
+    }
+
+    function enterSearchMode(q){
+      isSearching = true;
+      document.getElementById('btnLoadMore').style.display = 'none';
+      const titleEl = document.getElementById('newTitle');
+      titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
+    }
+
+    function exitSearchMode(){
+      isSearching = false;
+      document.getElementById('btnLoadMore').style.display = 'block';
+      document.getElementById('newTitle').innerText = (currentType === "movie" ? "تازه‌های فیلم" : currentType === "series" ? "تازه‌های سریال" : "تازه‌ها");
+      fetchNew(true);
+    }
+
+    // دکمه سرچ (هدر)
+    document.getElementById('btnSearch').addEventListener('click', () => {
+      haptic('light');
+      const open = !searchWrap.classList.contains('show');
+      setSearchUI(open);
     });
 
-    // Load More
-    document.getElementById('btnLoadMore').onclick = () => {
-        if (isSearching) searchPage++; else currentPage++;
-        loadMain(false);
-    };
+    // دکمه ضربدر
+    btnClearSearch.addEventListener('click', () => {
+      haptic('light');
+      searchInput.value = "";
+      btnClearSearch.classList.remove('show');
+      exitSearchMode();
+      searchInput.focus();
+    });
 
-    // Detail
-    async function openDetail(code) {
-        haptic('medium');
+    // تایپ
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      btnClearSearch.classList.toggle('show', q.length > 0);
+
+      clearTimeout(searchTimeout);
+
+      if(q.length === 0){
+        // اگر متن پاک شد ولی هنوز در حالت سرچ هستیم، خارج شو
+        if(isSearching) exitSearchMode();
+        return;
+      }
+
+      searchTimeout = setTimeout(() => performSearch(q), 500);
+    });
+
+    // اینتر
+    searchInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        const q = searchInput.value.trim();
+        if(q){
+          clearTimeout(searchTimeout);
+          performSearch(q);
+          searchInput.blur(); // بستن کیبورد موبایل
+        }
+      }
+    });
+
+    async function performSearch(q){
+      enterSearchMode(q);
+
+      const container = document.getElementById('newContainer');
+      container.innerHTML = `
+        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+      `;
+
+      try{
+        const url = new URL(`${API_URL}/api/movies`);
+        url.searchParams.set("q", q);
+        url.searchParams.set("limit", 20);
+        if(currentType) url.searchParams.set("type", currentType); 
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+
+        renderNew(data.items || []);
+      } catch(e){
+        console.error(e);
+        container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">خطا در جستجو.</div>`;
+      }
+    }
+
+    // --- Popular & Load More Logic ---
+    
+    function renderPopular(movies) {
+      const container = document.getElementById('popularContainer');
+      container.innerHTML = "";
+      if (!movies || !movies.length) {
+        container.innerHTML = `<div style="padding:0 20px;color:var(--muted);font-size:12px">چیزی پیدا نشد.</div>`;
+        return;
+      }
+      movies.forEach(m => {
+        const [g1,g2] = pickGenres(m.genres);
+        const card = document.createElement('div');
+        card.className = 'movie-card-large';
+        card.onclick = () => openDetail(m.code);
+        card.innerHTML = `
+          <div class="poster-container">
+            <img src="${m.poster}" class="poster-img" loading="lazy" alt="${safeText(m.title)}">
+            <div class="poster-overlay"></div>
+            <div class="card-info">
+              <div class="movie-title">${safeText(m.title)}</div>
+              <div class="rating-row">
+                <span class="star"><i class="bi bi-star-fill"></i></span>
+                <span>${m.vote ?? 0}</span>
+                ${m.year ? `<span style="color:var(--muted);font-weight:700">• ${safeText(m.year)}</span>` : ``}
+              </div>
+              <div class="tags">
+                <span class="tag">${safeText(g1)}</span>
+                <span class="tag">${safeText(g2)}</span>
+              </div>
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    async function fetchPopular() {
+      try {
+        const res = await fetch(`${API_URL}/api/top?limit=10`);
+        const data = await res.json();
+        renderPopular(data);
+      } catch (e) { console.error(e); }
+    }
+
+    async function loadMore() {
+      if (loadingMore) return;
+      if (currentPage >= totalPages) return;
+      loadingMore = true;
+      currentPage += 1;
+      await fetchNew(false);
+      loadingMore = false;
+    }
+
+    function setActiveTab(type) {
+      currentType = type;
+      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
+      // اگر در حال جستجو هستیم، فقط متغیر را ست کن، تایتل را عوض نکن
+      if (!isSearching) {
+          const title = document.getElementById('newTitle');
+          title.innerText = type === "movie" ? "تازه‌های فیلم" : type === "series" ? "تازه‌های سریال" : "تازه‌ها";
+          fetchNew(true);
+      } else {
+          // اگر در حال جستجو بودیم و تب عوض شد، دوباره با فیلتر جدید سرچ کن
+          const q = searchInput.value.trim();
+          if (q) performSearch(q);
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => setActiveTab(tab.dataset.type));
+    });
+
+    document.getElementById('refreshPopular').addEventListener('click', (e) => { e.preventDefault(); fetchPopular(); });
+    document.getElementById('refreshNew').addEventListener('click', (e) => { e.preventDefault(); fetchNew(true); });
+    document.getElementById('btnLoadMore').addEventListener('click', loadMore);
+
+    // ===== DETAIL VIEW =====
+    async function openDetail(code){
+      haptic('medium');
+      currentDetailCode = code;
+      detailStack = [];
+      showPage('pageDetail');
+
+      // skeleton
+      document.getElementById('detailCover').innerHTML = `<div class="skeleton" style="width:100%;height:100%"></div>`;
+      document.getElementById('detailTitle').innerText = "در حال بارگذاری...";
+      document.getElementById('detailMeta').innerHTML = "";
+      document.getElementById('detailOverview').innerText = "";
+      document.getElementById('treeBox').innerHTML = `<div class="skeleton" style="height: 120px; border-radius: 18px;"></div>`;
+      document.getElementById('treeHint').innerText = "";
+
+      try{
+        const [cRes, tRes] = await Promise.all([
+          fetch(`${API_URL}/api/content/${code}`),
+          fetch(`${API_URL}/api/content/${code}/tree`)
+        ]);
+        const content = await cRes.json();
+        const treePayload = await tRes.json();
+
+        // render content
+        document.getElementById('detailCover').innerHTML = `<img src="${content.poster}" alt="${safeText(content.title)}">`;
+        document.getElementById('detailTitle').innerText = content.title;
+
+        const typeText = content.type === 'series' ? 'سریال' : 'فیلم';
+        document.getElementById('detailType').innerText = typeText;
+
+        let meta = `
+          <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${content.vote ?? 0}</span>
+          ${content.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(content.year)}</span>` : ``}
+        `;
+        if (content.genres) meta += `<span class="chip"><i class="bi bi-tags"></i> ${safeText(content.genres.split(",")[0] || "")}</span>`;
+        document.getElementById('detailMeta').innerHTML = meta;
+
+        const ov = (content.overview || "").trim();
+        document.getElementById('detailOverview').innerText = ov ? ov : "خلاصه‌ای برای این عنوان ثبت نشده.";
+
+        // store root nodes
+        detailStack = [{ title: "ریشه", nodes: treePayload.tree || [] }];
+        renderTreeLevel();
+
+      }catch(e){
+        console.error(e);
+        document.getElementById('treeBox').innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">خطا در اتصال به سرور.</div>`;
+      }
+    }
+
+    function renderTreeLevel(){
+      const box = document.getElementById('treeBox');
+      const hint = document.getElementById('treeHint');
+      const level = detailStack[detailStack.length - 1];
+      const nodes = level.nodes || [];
+
+      hint.innerText = detailStack.length > 1 ? `سطح ${detailStack.length-1}` : "";
+
+      if (!nodes.length){
+        box.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">چیزی برای نمایش نیست.</div>`;
+        return;
+      }
+
+      box.innerHTML = "";
+
+      if (detailStack.length > 1){
+        const backNode = document.createElement('div');
+        backNode.className = "node";
+        backNode.onclick = () => { haptic('light'); detailStack.pop(); renderTreeLevel(); };
+        backNode.innerHTML = `
+          <div class="node-left">
+            <i class="bi bi-arrow-right"></i>
+            <div class="node-text">بازگشت</div>
+          </div>
+          <div class="node-right">..</div>
+        `;
+        box.appendChild(backNode);
+      }
+
+      nodes.forEach(n => {
+        const isFolder = n.media_type === "folder";
+        const nodeEl = document.createElement('div');
+        nodeEl.className = "node";
+        nodeEl.onclick = () => {
+          if (isFolder){
+            haptic('light');
+            detailStack.push({ title: n.text, nodes: n.children || [] });
+            renderTreeLevel();
+          } else {
+            haptic('medium');
+            tg.sendData(`GET:${n.id}`);
+          }
+        };
+
+        nodeEl.innerHTML = `
+          <div class="node-left">
+            <i class="bi ${isFolder ? 'bi-folder2-open' : 'bi-download'}"></i>
+            <div class="node-text">${safeText(n.text)}</div>
+          </div>
+          <div class="node-right">${isFolder ? 'باز کن' : 'دانلود'}</div>
+        `;
+        box.appendChild(nodeEl);
+      });
+    }
+
+    document.getElementById('detailBack').addEventListener('click', () => {
+      haptic('light');
+      showPage('pageHome');
+      currentDetailCode = null;
+      detailStack = [];
+    });
+
+    // ===== Bottom nav =====
+    function setNavActive(id) {
+      document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    document.getElementById('navHome').addEventListener('click', () => {
+      setNavActive('navHome');
+      showPage('pageHome');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    document.getElementById('navTop').addEventListener('click', () => {
+      setNavActive('navTop');
+      showPage('pageHome');
+      document.querySelector('#popularContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('navNew').addEventListener('click', () => {
+      setNavActive('navNew');
+      showPage('pageHome');
+      document.querySelector('#newContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('navBack').addEventListener('click', () => {
+      haptic('light');
+      if (document.getElementById('pageDetail').classList.contains('active')){
+        showPage('pageHome');
+        currentDetailCode = null;
         detailStack = [];
-        showPage('pageDetail');
+      } else {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
 
-        document.getElementById('detailCover').innerHTML = '<div class="skeleton" style="width:100%;height:100%"></div>';
-        document.getElementById('detailTitle').innerText = "در حال بارگذاری...";
-        document.getElementById('treeBox').innerHTML = '<div class="skeleton" style="height:120px;border-radius:18px"></div>';
+    // Header buttons
+    document.getElementById('btnRefresh').addEventListener('click', () => {
+      haptic('light');
+      fetchPopular();
+      fetchNew(true);
+    });
 
-        try {
-            const [cRes, tRes] = await Promise.all([
-                fetch(`${API_URL}/api/content/${code}`),
-                fetch(`${API_URL}/api/content/${code}/tree`)
-            ]);
-            const content = await cRes.json();
-            const tree = await tRes.json();
-
-            document.getElementById('detailCover').innerHTML = `<img src="${content.poster}" loading="lazy">`;
-            document.getElementById('detailTitle').innerText = content.title;
-            document.getElementById('detailType').innerText = content.type==='series'?'سریال':'فیلم';
-
-            let meta = `<span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${content.vote||0}</span>`;
-            if (content.year) meta += `<span class="chip"><i class="bi bi-calendar3"></i> ${content.year}</span>`;
-            document.getElementById('detailMeta').innerHTML = meta;
-
-            document.getElementById('detailOverview').innerText = content.overview || "خلاصه موجود نیست.";
-
-            detailStack = [{nodes: tree.tree || []}];
-            renderTree();
-        } catch(e) {
-            document.getElementById('treeBox').innerHTML = "<div style='color:var(--accent);padding:20px;text-align:center'>خطا در بارگذاری</div>";
-        }
-    }
-
-    function renderTree() {
-        const box = document.getElementById('treeBox');
-        const level = detailStack[detailStack.length-1];
-        const nodes = level.nodes || [];
-        box.innerHTML = "";
-
-        if (detailStack.length > 1) {
-            const back = document.createElement('div');
-            back.className = "node";
-            back.onclick = () => { haptic(); detailStack.pop(); renderTree(); };
-            back.innerHTML = `<div class="node-left"><i class="bi bi-arrow-right"></i><div class="node-text">بازگشت</div></div>`;
-            box.appendChild(back);
-        }
-
-        if (!nodes.length) {
-            box.innerHTML = "<div style='color:var(--muted);padding:20px;text-align:center'>کیفیتی موجود نیست</div>";
-            return;
-        }
-
-        nodes.forEach(n => {
-            const el = document.createElement('div');
-            el.className = "node";
-            el.onclick = () => {
-                if (n.media_type === "folder") {
-                    haptic();
-                    detailStack.push({nodes: n.children || []});
-                    renderTree();
-                } else {
-                    haptic('medium');
-                    el.style.opacity = "0.6";
-                    el.querySelector('.node-right').innerText = "در حال ارسال...";
-                    tg.sendData(`GET:${n.id}`);
-                    setTimeout(() => el.querySelector('.node-right').innerText = "ارسال شد ✓", 800);
-                }
-            };
-            el.innerHTML = `
-                <div class="node-left">
-                    <i class="bi ${n.media_type==='folder'?'bi-folder2-open':'bi-download'}"></i>
-                    <div class="node-text">${safeText(n.text)}</div>
-                </div>
-                <div class="node-right">${n.media_type==='folder'?'باز کن':'دانلود'}</div>
-            `;
-            box.appendChild(el);
-        });
-    }
-
-    document.getElementById('detailBack').onclick = () => { haptic(); showPage('pageHome'); detailStack = []; };
-
-    // Nav
-    const setNav = id => document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active', x.id===id));
-    document.getElementById('navHome').onclick = () => { setNav('navHome'); showPage('pageHome'); scrollTo(0,0); };
-    document.getElementById('navTop').onclick = () => { setNav('navTop'); showPage('pageHome'); document.querySelector('#popularContainer').scrollIntoView({behavior:'smooth'}); };
-    document.getElementById('navNew').onclick = () => { setNav('navNew'); showPage('pageHome'); document.querySelector('#newContainer').scrollIntoView({behavior:'smooth'}); };
-
-    // Refresh
-    document.getElementById('btnRefresh').onclick = () => {
-        haptic();
-        localStorage.clear();
-        popularData = null;
-        loadPopular(true);
-        loadMain(true);
-    };
-
-    document.getElementById('refreshPopular').onclick = e => { e.preventDefault(); loadPopular(true); };
-    document.getElementById('refreshNew').onclick = e => { e.preventDefault(); loadMain(true); };
+    document.getElementById('btnMenu').addEventListener('click', () => {
+      haptic('light');
+      tg.showPopup({
+        title: "NightCut",
+        message: "بعداً می‌تونی اینجا تنظیمات / راهنما / پروفایل اضافه کنی.",
+        buttons: [{ id: "ok", type: "ok", text: "باشه" }]
+      });
+    });
 
     // Init
-    function showPage(id) {
-        document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id===id));
-    }
-
     setupUser();
-    loadPopular();
-    loadMain(true);
-</script>
+    fetchPopular();
+    fetchNew(true);
+  </script>
 </body>
 </html>
