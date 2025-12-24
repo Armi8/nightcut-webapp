@@ -210,9 +210,17 @@
       </div>
     </div>
     <div class="header-actions">
-      <div class="icon-btn" id="btnRefresh" title="رفرش"><i class="bi bi-arrow-repeat"></i></div>
-      <div class="icon-btn" id="btnMenu" title="منو"><i class="bi bi-list"></i></div>
+        <div class="icon-btn" id="btnSearch" title="جستجو"><i class="bi bi-search"></i></div>
+        <div class="icon-btn" id="btnRefresh" title="رفرش"><i class="bi bi-arrow-repeat"></i></div>
+        <div class="icon-btn" id="btnMenu" title="منو"><i class="bi bi-list"></i></div>
     </div>
+    <div id="searchContainer" style="display:none; padding: 0 20px 10px;">
+    <div style="position:relative;">
+      <input type="text" id="searchInput" placeholder="نام فیلم یا سریال را بنویسید..." 
+             style="width:100%; padding:14px 16px; border-radius:16px; border:1px solid var(--line); background:var(--card); color:#fff; font-family:inherit; padding-left: 40px;">
+      <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted)"></i>
+    </div>
+  </div>
   </div>
 
   <!-- HOME PAGE -->
@@ -292,7 +300,16 @@
     tg.setHeaderColor('#0f1014');
 
     // ✅ آدرس API خودت
-    const API_URL = "https://kiss-cindy-plaintiff-fun.trycloudflare.com";
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // ۲. گرفتن آدرس API از پارامتر 'api'
+    // اگر ربات لینکی نداد، از آدرس پیش‌فرض (تست لوکال) استفاده کن
+    const API_URL = urlParams.get('api') || "http://127.0.0.1:8000";
+
+    // برای دیباگ (تو کنسول مرورگر نشون میده به کجا وصل شده)
+    console.log("Connected to API:", API_URL);
+
+    // 👆👆👆 پایان تغییرات 👆👆👆
 
     // state
     let currentType = "";
@@ -308,7 +325,77 @@
     function safeText(s) {
       return (s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
+    // 🔍 Search Logic
+    let searchTimeout;
+    const searchContainer = document.getElementById('searchContainer');
+    const searchInput = document.getElementById('searchInput');
 
+    // 1. باز و بسته کردن کادر جستجو
+    document.getElementById('btnSearch').addEventListener('click', () => {
+      haptic('light');
+      const isHidden = searchContainer.style.display === 'none';
+      searchContainer.style.display = isHidden ? 'block' : 'none';
+      
+      if (isHidden) {
+        searchInput.focus(); // فوکوس خودکار روی اینپوت
+      } else {
+        searchInput.value = ""; // پاک کردن متن هنگام بستن
+        fetchNew(true); // برگشت به حالت عادی
+        document.getElementById('newTitle').innerText = "تازه‌ها";
+      }
+    });
+
+    // 2. لاجیک تایپ کردن (با Debounce)
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.trim();
+      
+      // پاک کردن تایمر قبلی (اگر کاربر تند تند تایپ کنه)
+      clearTimeout(searchTimeout);
+
+      if (query.length === 0) {
+        document.getElementById('newTitle').innerText = "تازه‌ها";
+        fetchNew(true);
+        return;
+      }
+
+      // تنظیم تایمر جدید (۶۰۰ میلی‌ثانیه بعد از آخرین تایپ اجرا میشه)
+      searchTimeout = setTimeout(() => {
+        performSearch(query);
+      }, 600);
+    });
+
+    async function performSearch(q) {
+      // تغییر تیتر برای اینکه کاربر بفهمه داریم میگردیم
+      const titleEl = document.getElementById('newTitle');
+      titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
+      
+      // نمایش اسکلتون (لدرینگ) در لیست پایین
+      const container = document.getElementById('newContainer');
+      container.innerHTML = `
+        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+      `;
+
+      try {
+        // ساخت آدرس API با پارامتر q
+        const url = new URL(`${API_URL}/api/movies`);
+        url.searchParams.set("q", q);
+        url.searchParams.set("limit", 20); // در سرچ تعداد بیشتر نشون بدیم
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+
+        // نمایش نتایج با تابع رندر قبلی
+        renderNew(data.items || []);
+        
+        // مخفی کردن دکمه "نمایش بیشتر" در حالت سرچ
+        document.getElementById('btnLoadMore').style.display = 'none';
+
+      } catch (e) {
+        console.error(e);
+        container.innerHTML = `<div style="color:var(--muted);font-size:12px">خطا در جستجو.</div>`;
+      }
+    }
     function pickGenres(genresStr) {
       const arr = (genresStr || "").split(",").map(s => s.trim()).filter(Boolean);
       return [arr[0] || "Movie", arr[1] || "HD"];
@@ -630,4 +717,3 @@
   </script>
 </body>
 </html>
-
