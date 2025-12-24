@@ -4,437 +4,666 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>NightCut</title>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
   <style>
     :root{
-      --bg:#0f1014; --card:#15161a; --card2:#1a1b1f; --text:#fff;
-      --muted:#8e929b; --line: rgba(255,255,255,0.06); --accent:#e11d48;
-      --shadow: 0 10px 30px rgba(0,0,0,0.55); --radius: 18px;
+      --bg:#0f1014;
+      --card:#15161a;
+      --card2:#1a1b1f;
+      --text:#fff;
+      --muted:#8e929b;
+      --line: rgba(255,255,255,0.06);
+      --accent:#e11d48;
+      --shadow: 0 10px 30px rgba(0,0,0,0.55);
+      --radius: 18px;
     }
     *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none}
-    body{margin:0;font-family:'Vazirmatn',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;padding-bottom:86px}
+    body{
+      margin:0;
+      font-family:'Vazirmatn',sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+      padding-bottom: 86px;
+    }
     a{color:inherit;text-decoration:none}
 
-    /* HEADER */
-    .header{display:flex;justify-content:space-between;align-items:center;padding:20px 20px 10px;position:sticky;top:0;z-index:10;background:rgba(15,16,20,0.95);backdrop-filter:blur(10px)}
+    .header{
+      display:flex;justify-content:space-between;align-items:center;
+      padding:20px 20px 10px;
+      position:sticky;top:0;z-index:10;
+      background:linear-gradient(to bottom, rgba(15,16,20,0.96) 65%, rgba(15,16,20,0.0));
+      backdrop-filter: blur(10px);
+    }
     .user-profile{display:flex;align-items:center;gap:12px}
-    .avatar{width:46px;height:46px;border-radius:50%;object-fit:cover;border:2px solid #222;background:#222}
-    .welcome-text{font-size:10px;color:var(--muted)}
-    .username-text{font-size:14px;font-weight:800}
-    .header-actions{display:flex;gap:8px}
-    .icon-btn{width:38px;height:38px;background:var(--card2);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;color:white;border:1px solid var(--line)}
+    .avatar{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #222;background:#222}
+    .welcome-text{font-size:11px;color:var(--muted)}
+    .username-text{font-size:16px;font-weight:800}
+    .header-actions{display:flex;gap:10px}
+    .icon-btn{
+      width:40px;height:40px;background:var(--card2);
+      border-radius:14px;display:flex;align-items:center;justify-content:center;
+      font-size:20px;cursor:pointer;color:white;border:1px solid var(--line);
+    }
 
-    /* SEARCH */
-    .search-wrap{display:none;width:100%;padding:0 20px 10px;position:sticky;top:70px;z-index:9;background:var(--bg)}
-    .search-wrap.show{display:block}
-    .search-box{position:relative}
-    .search-box input{width:100%;padding:12px 40px 12px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card);color:#fff;font-family:inherit;font-size:14px}
-    .search-ico{position:absolute;right:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
-    
-    /* SECTIONS */
-    .home-content {transition: opacity 0.3s}
-    .home-content.hidden {display: none}
-    
-    .section-header{display:flex;justify-content:space-between;align-items:center;padding:0 20px;margin:20px 0 12px}
-    .section-title{font-size:16px;font-weight:800;border-right:3px solid var(--accent);padding-right:8px}
-    
-    /* HORIZONTAL SCROLL */
-    .scroll-container{display:flex;gap:14px;overflow-x:auto;padding:0 20px 10px;scroll-snap-type:x mandatory}
+    .tabs{display:flex;gap:8px;padding: 0 20px 10px;}
+    .tab{
+      flex:1;background: rgba(255,255,255,0.05);border:1px solid var(--line);
+      border-radius: 14px;padding:10px 12px;text-align:center;font-size:12px;color: var(--muted);
+      cursor:pointer;user-select:none;
+    }
+    .tab.active{background: rgba(225,29,72,0.16);border-color: rgba(225,29,72,0.25);color:#fff;font-weight:800;}
+
+    .section-header{
+      display:flex;justify-content:space-between;align-items:flex-end;
+      padding:0 20px;margin:14px 0 12px;
+    }
+    .section-title{font-size:20px;font-weight:800}
+    .view-all{font-size:12px;color:var(--muted)}
+
+    .scroll-container{display:flex;gap:18px;overflow-x:auto;padding:0 20px 26px;scroll-snap-type:x mandatory;}
     .scroll-container::-webkit-scrollbar{display:none}
-    .movie-card-large{flex:0 0 140px;position:relative;scroll-snap-align:start}
-    .poster-container{width:100%;aspect-ratio:2/3;border-radius:16px;overflow:hidden;position:relative;margin-bottom:8px}
+    .movie-card-large{flex:0 0 240px;position:relative;scroll-snap-align:center}
+    .poster-container{
+      width:100%;aspect-ratio:2/3;border-radius:24px;overflow:hidden;position:relative;
+      box-shadow:var(--shadow);border:1px solid var(--line);
+    }
     .poster-img{width:100%;height:100%;object-fit:cover}
-    .card-rating{position:absolute;top:6px;right:6px;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);padding:2px 6px;border-radius:6px;font-size:10px;font-weight:bold;color:#f1c40f;display:flex;gap:3px;align-items:center}
-    .movie-title-scroll{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:700}
+    .poster-overlay{position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.95) 12%, transparent 60%);}
+    .card-info{position:absolute;bottom:14px;left:14px;right:14px;z-index:2;}
+    .movie-title{font-size:18px;font-weight:800;margin-bottom:6px;text-shadow:0 2px 4px #000}
+    .rating-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:800}
+    .star{color:#f1c40f}
+    .tags{display:flex;gap:6px;flex-wrap:wrap}
+    .tag{padding:4px 10px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,0.08);background: rgba(255,255,255,0.06);}
 
-    /* VERTICAL LIST */
-    .vertical-list{padding:0 20px;display:flex;flex-direction:column;gap:10px}
-    .movie-card-small{display:flex;gap:12px;align-items:center;background:var(--card);padding:8px;border-radius:14px;border:1px solid var(--line)}
-    .small-poster{width:60px;height:60px;border-radius:10px;object-fit:cover}
+    .vertical-list{padding:0 20px;display:flex;flex-direction:column;gap:12px;}
+    .movie-card-small{
+      display:flex;gap:14px;align-items:center;background:var(--card);
+      padding:10px;border-radius:18px;border:1px solid var(--line);cursor:pointer;
+    }
+    .small-poster{width:72px;height:72px;border-radius:14px;object-fit:cover}
     .small-info{flex:1;min-width:0}
-    .small-title{font-size:13px;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .small-meta{font-size:10px;color:var(--muted);display:flex;gap:8px}
-    .chip{display:inline-flex;gap:4px;align-items:center;background:rgba(255,255,255,0.05);padding:2px 6px;border-radius:6px}
+    .small-title{font-size:14px;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .small-meta{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+    .chip{display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border-radius:999px;background: rgba(255,255,255,0.06);border:1px solid var(--line);}
+    .play-btn-small{
+      width:38px;height:38px;background:rgba(255,255,255,0.06);
+      border:1px solid var(--line);border-radius:50%;
+      display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;
+    }
 
-    /* LOAD MORE */
-    .btn{width:100%;background:var(--card2);border:1px solid var(--line);color:var(--muted);border-radius:14px;padding:12px;font-size:12px;margin-top:20px}
-    
-    /* DETAIL PAGE & OTHERS (Simplified from previous) */
-    .page{display:none} .page.active{display:block}
-    .detail-hero{position:relative}
-    .detail-cover{height:300px;position:relative}
-    .detail-cover img{width:100%;height:100%;object-fit:cover;mask-image:linear-gradient(to bottom, black 60%, transparent 100%)}
-    .detail-info{padding:20px;margin-top:-60px;position:relative;z-index:2}
-    .d-title{font-size:22px;font-weight:900;margin-bottom:10px;text-shadow:0 2px 10px rgba(0,0,0,0.8)}
-    .d-overview{font-size:12px;color:#ccc;line-height:1.6;margin-bottom:20px}
-    .tree-box{padding:20px}
-    .node{background:var(--card);padding:12px;margin-bottom:8px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;border:1px solid var(--line)}
+    .btn{
+      width:100%;background:rgba(225,29,72,0.14);
+      border:1px solid rgba(225,29,72,0.25);color:#fff;border-radius:16px;
+      padding:12px 14px;font-weight:900;cursor:pointer;
+    }
+    .btn:disabled{opacity:.6;cursor:not-allowed}
+    .load-more-wrap{padding: 14px 20px 30px}
 
-    /* SKELETON */
-    .skeleton{background:#1f2125;animation:pulse 1.5s infinite;border-radius:inherit;width:100%;height:100%}
+    .skeleton{background:#222;animation:pulse 1.35s infinite;border-radius:inherit}
     @keyframes pulse{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
 
-    /* BOTTOM NAV */
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(15,16,20,0.95);border-top:1px solid var(--line);padding:10px 20px 20px;display:flex;justify-content:space-around;backdrop-filter:blur(10px);z-index:20}
-    .nav-item{color:var(--muted);font-size:10px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:4px}
-    .nav-item.active{color:var(--accent)}
-    .nav-item i{font-size:20px}
+    /* DETAIL VIEW */
+    .page{display:none}
+    .page.active{display:block}
 
-    /* SEARCH RESULTS AREA */
-    #searchResultsArea { padding-top: 20px; }
-    .search-header { padding: 0 20px 10px; font-size: 14px; color: var(--accent); font-weight: bold; }
+    .detail-hero{
+      position:relative;
+      padding: 0 18px 14px;
+    }
+    .detail-cover{
+      width:100%;
+      height: 280px;
+      border-radius: 26px;
+      overflow:hidden;
+      position:relative;
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      margin-top: 8px;
+    }
+    .detail-cover img{width:100%;height:100%;object-fit:cover;filter:saturate(1.05)}
+    .detail-cover::after{
+      content:"";
+      position:absolute;inset:0;
+      background: linear-gradient(to top, rgba(15,16,20,0.96) 12%, rgba(15,16,20,0.15) 65%, rgba(15,16,20,0.05));
+    }
+    .detail-topbar{
+      display:flex;justify-content:space-between;align-items:center;
+      padding: 14px 18px 6px;
+    }
+    .back-btn{
+      width:42px;height:42px;border-radius:16px;
+      background:rgba(255,255,255,0.06);border:1px solid var(--line);
+      display:flex;align-items:center;justify-content:center;cursor:pointer;
+    }
+    .detail-title{
+      font-size:18px;font-weight:900;margin:12px 0 6px;
+      padding: 0 6px;
+    }
+    .detail-meta{
+      padding: 0 6px;
+      display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px;
+      margin-bottom: 10px;
+    }
+    .detail-overview{
+      padding: 0 6px;
+      color:#d7d7d7;
+      font-size:13px;
+      line-height: 1.85;
+      margin-bottom: 12px;
+    }
+
+    .tree-wrap{
+      padding: 0 18px 22px;
+    }
+    .tree-title{
+      display:flex;align-items:center;justify-content:space-between;
+      margin: 6px 0 10px;
+    }
+    .tree-title h3{margin:0;font-size:16px}
+    .tree-box{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: 20px;
+      padding: 10px;
+    }
+    .node{
+      display:flex;align-items:center;justify-content:space-between;
+      padding: 10px 10px;
+      border-radius: 16px;
+      cursor:pointer;
+    }
+    .node:hover{background: rgba(255,255,255,0.04)}
+    .node + .node{margin-top: 6px}
+    .node-left{display:flex;align-items:center;gap:10px;min-width:0}
+    .node-left i{font-size:18px;color: #cfcfcf}
+    .node-text{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .node-right{color:var(--muted);font-size:12px}
+
+    .bottom-nav{
+      position:fixed;left:0;right:0;bottom:0;
+      background:rgba(15,16,20,0.92);border-top:1px solid var(--line);
+      backdrop-filter: blur(10px);
+      padding: 10px 14px 18px;
+      display:flex;gap:10px;justify-content:space-between;z-index:20;
+    }
+        /* SEARCH UI (RTL-friendly) */
+    .search-wrap{
+    display:none;
+    width:100%;
+    padding: 10px 20px 14px;
+    }
+    .search-wrap.show{ display:block; }
+
+    .search-box{
+    position:relative;
+    }
+    .search-box input{
+    width:100%;
+    padding: 14px 44px 14px 44px; /* راست: آیکون، چپ: دکمه پاک کردن */
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:#fff;
+    font-family:inherit;
+    }
+    .search-ico{
+    position:absolute;
+    right:14px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--muted);
+    font-size:18px;
+    }
+    .clear-btn{
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    width:34px;
+    height:34px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,0.06);
+    color: var(--muted);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    }
+    .clear-btn.show{ display:flex; }
+
+    .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;cursor:pointer;user-select:none;}
+    .nav-item i{font-size:20px}
+    .nav-item.active{color:#fff}
+
   </style>
 </head>
+
 <body>
 
-  <div class="header">
+    <!-- Header -->
+    <div class="header">
     <div class="user-profile">
-      <img src="" class="avatar" id="userAvatar">
-      <div>
+        <img src="" class="avatar" id="userAvatar" alt="avatar">
+        <div>
         <div class="welcome-text">خوش اومدی 👋</div>
-        <div class="username-text" id="userName">کاربر</div>
-      </div>
+        <div class="username-text" id="userName">کاربر عزیز</div>
+        </div>
     </div>
+
     <div class="header-actions">
-      <div class="icon-btn" id="btnSearch"><i class="bi bi-search"></i></div>
+        <div class="icon-btn" id="btnSearch" title="جستجو"><i class="bi bi-search"></i></div>
+        <div class="icon-btn" id="btnRefresh" title="رفرش"><i class="bi bi-arrow-repeat"></i></div>
+        <div class="icon-btn" id="btnMenu" title="منو"><i class="bi bi-list"></i></div>
     </div>
-  </div>
 
-  <div class="search-wrap" id="searchWrap">
-    <div class="search-box">
-      <input type="text" id="searchInput" placeholder="جستجوی فیلم یا سریال...">
-      <i class="bi bi-search search-ico"></i>
+    <!-- Search -->
+    <div id="searchContainer" class="search-wrap">
+        <div class="search-box">
+        <i class="bi bi-search search-ico"></i>
+        <input type="text" id="searchInput" placeholder="نام فیلم یا سریال را بنویسید...">
+        <button id="btnClearSearch" class="clear-btn" type="button" aria-label="پاک کردن">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        </div>
     </div>
-  </div>
-
-  <div id="pageHome" class="page active">
     
-    <div id="homeDashboard" class="home-content">
-      
-      <div class="section-header">
-        <div class="section-title">فیلم‌های ترند 🔥</div>
-      </div>
-      <div class="scroll-container" id="trendMovieCont">
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-      </div>
 
-      <div class="section-header">
-        <div class="section-title">برترین فیلم‌ها ⭐</div>
-      </div>
-      <div class="scroll-container" id="topMovieCont">
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-      </div>
 
-      <div class="section-header">
-        <div class="section-title">سریال‌های ترند 🔥</div>
-      </div>
-      <div class="scroll-container" id="trendSeriesCont">
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-      </div>
+  <!-- HOME PAGE -->
+  <div id="pageHome" class="page active">
 
-      <div class="section-header">
-        <div class="section-title">برترین سریال‌ها ⭐</div>
-      </div>
-      <div class="scroll-container" id="topSeriesCont">
-        <div class="movie-card-large"><div class="poster-container"><div class="skeleton"></div></div></div>
-      </div>
-
-      <div class="section-header" style="margin-top:30px">
-        <div class="section-title">آرشیو کامل 📂</div>
-      </div>
-      <div class="vertical-list" id="allContentCont"></div>
-      
-      <div style="padding:20px">
-        <button class="btn" id="btnLoadMore">نمایش بیشتر</button>
-      </div>
+    <div class="tabs">
+      <div class="tab active" data-type="">همه</div>
+      <div class="tab" data-type="movie">فیلم</div>
+      <div class="tab" data-type="series">سریال</div>
     </div>
 
-    <div id="searchResultsArea" class="home-content hidden">
-      <div class="search-header" id="searchStatusText">نتایج جستجو:</div>
-      <div class="vertical-list" id="searchResultList"></div>
+    <div class="section-header">
+      <div class="section-title">محبوب‌ترین‌ها</div>
+      <a href="#" class="view-all" id="refreshPopular">رفرش</a>
     </div>
 
+    <div class="scroll-container" id="popularContainer">
+      <!-- skeletons -->
+    </div>
+
+    <div class="section-header">
+      <div class="section-title" id="newTitle">تازه‌ها</div>
+      <a href="#" class="view-all" id="refreshNew">رفرش</a>
+    </div>
+
+    <div class="vertical-list" id="newContainer">
+      <!-- items -->
+    </div>
+
+    <div class="load-more-wrap">
+      <button class="btn" id="btnLoadMore">نمایش بیشتر</button>
+    </div>
   </div>
 
+  <!-- DETAIL PAGE -->
   <div id="pageDetail" class="page">
+    <div class="detail-topbar">
+      <div class="back-btn" id="detailBack"><i class="bi bi-arrow-right"></i></div>
+      <div style="color:var(--muted);font-size:12px" id="detailType"></div>
+      <div style="width:42px"></div>
+    </div>
+
     <div class="detail-hero">
-      <div class="detail-cover" id="dCover"></div>
-      <div class="detail-info">
-        <div class="d-title" id="dTitle"></div>
-        <div class="d-overview" id="dOverview"></div>
-        <div class="small-meta" id="dMeta"></div>
+      <div class="detail-cover" id="detailCover">
+        <!-- poster -->
+      </div>
+
+      <div class="detail-title" id="detailTitle">...</div>
+      <div class="detail-meta" id="detailMeta"></div>
+      <div class="detail-overview" id="detailOverview"></div>
+    </div>
+
+    <div class="tree-wrap">
+      <div class="tree-title">
+        <h3>کیفیت‌ها / فصل‌ها</h3>
+        <div style="color:var(--muted);font-size:12px" id="treeHint"></div>
+      </div>
+      <div class="tree-box" id="treeBox">
+        <!-- tree nodes -->
       </div>
     </div>
-    <div class="tree-box" id="dTree"></div>
-    <div style="height:100px"></div>
   </div>
 
+  <!-- Bottom Nav -->
   <div class="bottom-nav">
-    <div class="nav-item active" onclick="goHome()"><i class="bi bi-house"></i><span>خانه</span></div>
-    <div class="nav-item" onclick="toggleSearch()"><i class="bi bi-search"></i><span>جستجو</span></div>
-    <div class="nav-item" onclick="goBack()"><i class="bi bi-arrow-left"></i><span>برگشت</span></div>
+    <div class="nav-item active" id="navHome"><i class="bi bi-house-door"></i><div>خانه</div></div>
+    <div class="nav-item" id="navTop"><i class="bi bi-fire"></i><div>محبوب‌ها</div></div>
+    <div class="nav-item" id="navNew"><i class="bi bi-clock-history"></i><div>تازه‌ها</div></div>
+    <div class="nav-item" id="navBack"><i class="bi bi-arrow-left-circle"></i><div>برگشت</div></div>
   </div>
 
 <script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
-  tg.setHeaderColor('#0f1014');
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+    tg.setHeaderColor('#0f1014');
 
-  // آدرس API را تنظیم کنید (اگر لوکال هستید همین بماند)
-  const urlParams = new URLSearchParams(window.location.search);
-  const API_URL = urlParams.get('api') || "http://127.0.0.1:8000";
+    const urlParams = new URLSearchParams(window.location.search);
+    const API_URL = urlParams.get('api') || "http://127.0.0.1:8000";
 
-  // State
-  let allPage = 1;
-  let allLoading = false;
-  let detailStack = [];
-
-  // Setup User
-  function setupUser() {
-    let name = "کاربر";
-    let photo = "https://ui-avatars.com/api/?name=User&background=222&color=fff";
-    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-      const u = tg.initDataUnsafe.user;
-      name = u.first_name;
-      if (u.photo_url) photo = u.photo_url;
+    // Cache
+    const CACHE_KEY = "nightcut_cache_v2";
+    const CACHE_TTL = 600000; // 10 دقیقه
+    function getCache(key) {
+        try {
+            const data = JSON.parse(localStorage.getItem(CACHE_KEY + key) || "null");
+            if (data && Date.now() - data.ts < CACHE_TTL) return data.value;
+        } catch(e) {}
+        return null;
     }
-    document.getElementById('userName').innerText = name;
-    document.getElementById('userAvatar').src = photo;
-  }
-
-  // --- Core Fetcher ---
-  async function fetchData(endpoint, params={}) {
-    const url = new URL(`${API_URL}${endpoint}`);
-    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-    try {
-      const res = await fetch(url);
-      return await res.json();
-    } catch(e) {
-      console.error("API Error", e);
-      return null;
-    }
-  }
-
-  // --- Rendering Helpers ---
-  function createCard(item, isSmall=false) {
-    if(isSmall) {
-      return `
-        <div class="movie-card-small" onclick="openDetail('${item.code}')">
-          <img src="${item.poster}" class="small-poster" loading="lazy">
-          <div class="small-info">
-            <div class="small-title">${item.title}</div>
-            <div class="small-meta">
-               <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${item.vote}</span>
-               <span class="chip">${item.year}</span>
-            </div>
-          </div>
-        </div>`;
-    } else {
-      return `
-        <div class="movie-card-large" onclick="openDetail('${item.code}')">
-          <div class="poster-container">
-            <img src="${item.poster}" class="poster-img" loading="lazy">
-            <div class="card-rating"><i class="bi bi-star-fill"></i> ${item.vote}</div>
-          </div>
-          <div class="movie-title-scroll">${item.title}</div>
-        </div>`;
-    }
-  }
-
-  function renderList(containerId, items, isSmall=false, append=false) {
-    const el = document.getElementById(containerId);
-    if (!items || items.length === 0) {
-      if(!append) el.innerHTML = '<div style="font-size:12px;color:gray;padding:10px">موردی یافت نشد.</div>';
-      return;
-    }
-    let html = items.map(i => createCard(i, isSmall)).join('');
-    if(append) el.innerHTML += html;
-    else el.innerHTML = html;
-  }
-
-  // --- Logic: Load Dashboard Sections ---
-  async function loadDashboard() {
-    // 1. Trending Movies (Popular + Movie)
-    const trendM = await fetchData('/api/movies', { type: 'movie', sort: 'popular', limit: 6 });
-    renderList('trendMovieCont', trendM?.items);
-
-    // 2. Top Movies (Top + Movie)
-    const topM = await fetchData('/api/movies', { type: 'movie', sort: 'top', limit: 6 });
-    renderList('topMovieCont', topM?.items);
-
-    // 3. Trending Series
-    const trendS = await fetchData('/api/movies', { type: 'series', sort: 'popular', limit: 6 });
-    renderList('trendSeriesCont', trendS?.items);
-
-    // 4. Top Series
-    const topS = await fetchData('/api/movies', { type: 'series', sort: 'top', limit: 6 });
-    renderList('topSeriesCont', topS?.items);
-
-    // 5. All Content
-    loadMoreAll(true);
-  }
-
-  async function loadMoreAll(reset=false) {
-    if(reset) { allPage = 1; document.getElementById('allContentCont').innerHTML = ''; }
-    if(allLoading) return;
-    
-    allLoading = true;
-    document.getElementById('btnLoadMore').innerText = "در حال بارگذاری...";
-    
-    const data = await fetchData('/api/movies', { page: allPage, limit: 10, sort: 'new' });
-    
-    if(data && data.items) {
-      renderList('allContentCont', data.items, true, true);
-      allPage++;
-      if(allPage > data.total_pages) document.getElementById('btnLoadMore').style.display = 'none';
-      else document.getElementById('btnLoadMore').innerText = "نمایش بیشتر";
-    }
-    allLoading = false;
-  }
-
-  document.getElementById('btnLoadMore').onclick = () => loadMoreAll();
-
-  // --- Logic: Search ---
-  let searchTimeout;
-  function toggleSearch() {
-    const wrap = document.getElementById('searchWrap');
-    wrap.classList.toggle('show');
-    if(wrap.classList.contains('show')) document.getElementById('searchInput').focus();
-    else cancelSearch();
-  }
-  
-  document.getElementById('btnSearch').onclick = toggleSearch;
-
-  document.getElementById('searchInput').addEventListener('input', (e) => {
-    clearTimeout(searchTimeout);
-    const q = e.target.value.trim();
-    if(!q) {
-      cancelSearch();
-      return;
-    }
-    searchTimeout = setTimeout(() => performSearch(q), 600);
-  });
-
-  async function performSearch(q) {
-    // Hide Dashboard, Show Search Results
-    document.getElementById('homeDashboard').classList.add('hidden');
-    document.getElementById('searchResultsArea').classList.remove('hidden');
-    document.getElementById('searchResultList').innerHTML = '<div class="skeleton" style="height:60px;margin-bottom:10px"></div>';
-    document.getElementById('searchStatusText').innerText = `نتایج جستجو برای: "${q}"`;
-
-    const data = await fetchData('/api/movies', { q: q, limit: 20 });
-    renderList('searchResultList', data?.items, true);
-  }
-
-  function cancelSearch() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('homeDashboard').classList.remove('hidden');
-    document.getElementById('searchResultsArea').classList.add('hidden');
-  }
-
-  // --- Logic: Detail Page ---
-  async function openDetail(code) {
-    document.getElementById('pageHome').classList.remove('active');
-    document.getElementById('pageDetail').classList.add('active');
-    window.scrollTo(0,0);
-    
-    // Skeleton load
-    const dCover = document.getElementById('dCover');
-    dCover.innerHTML = '<div class="skeleton"></div>';
-    
-    const content = await fetchData(`/api/content/${code}`);
-    const tree = await fetchData(`/api/content/${code}/tree`);
-    
-    if(!content) return;
-
-    dCover.innerHTML = `<img src="${content.poster}">`;
-    document.getElementById('dTitle').innerText = content.title;
-    document.getElementById('dOverview').innerText = content.overview || "توضیحی ثبت نشده.";
-    document.getElementById('dMeta').innerHTML = `
-      <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${content.vote}</span>
-      <span class="chip">${content.year}</span>
-      <span class="chip">${content.type === 'movie' ? 'فیلم' : 'سریال'}</span>
-    `;
-
-    renderTree(tree.tree);
-  }
-
-  function renderTree(nodes) {
-    const box = document.getElementById('dTree');
-    box.innerHTML = '';
-    if(!nodes || !nodes.length) { box.innerHTML = 'فایلی یافت نشد.'; return; }
-    
-    // Simple recursive visualizer handled by simple clicks for now
-    // For simplicity in this edit, I'll just show root nodes. 
-    // Implementing full folder navigation requires a stack logic similar to previous code.
-    // Let's bring back a simple stack logic here:
-    
-    detailStack = [{nodes: nodes, title: 'Root'}];
-    renderCurrentTreeLevel();
-  }
-
-  function renderCurrentTreeLevel() {
-    const box = document.getElementById('dTree');
-    box.innerHTML = '';
-    const current = detailStack[detailStack.length-1];
-    
-    if(detailStack.length > 1) {
-      box.innerHTML += `
-        <div class="node" onclick="popTree()" style="background:#2a2d35">
-           <div><i class="bi bi-arrow-return-right"></i> بازگشت</div>
-        </div>`;
+    function setCache(key, value) {
+        try { localStorage.setItem(CACHE_KEY + key, JSON.stringify({value, ts: Date.now()})); } catch(e) {}
     }
 
-    current.nodes.forEach(n => {
-      const isFolder = n.media_type === 'folder';
-      const icon = isFolder ? 'bi-folder-fill' : 'bi-download';
-      const div = document.createElement('div');
-      div.className = 'node';
-      div.innerHTML = `<div><i class="bi ${icon}" style="margin-left:8px;color:${isFolder?'#f1c40f':'#e11d48'}"></i> ${n.text}</div>`;
-      div.onclick = () => {
-        if(isFolder) {
-           detailStack.push({nodes: n.children, title: n.text});
-           renderCurrentTreeLevel();
-        } else {
-           tg.sendData(`GET:${n.id}`);
-           tg.close();
+    // State
+    let currentType = "";
+    let currentPage = 1;
+    let totalPages = 1;
+    let loading = false;
+    let isSearching = false;
+    let searchQuery = "";
+    let searchPage = 1;
+    let searchTotalPages = 1;
+    let popularData = null;
+    let detailStack = [];
+
+    // Helpers
+    const safeText = s => (s||"").replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const haptic = t => { try { tg.HapticFeedback.impactOccurred(t||'light'); } catch(e) {} };
+
+    const pickGenres = g => {
+        const arr = (g||"").split(",").map(s=>s.trim()).filter(Boolean);
+        return [arr[0]||"فیلم", arr[1]||"HD"];
+    };
+
+    function setupUser() {
+        let name = "کاربر عزیز";
+        let avatar = "https://ui-avatars.com/api/?name=Guest&background=111827&color=fff";
+        if (tg.initDataUnsafe?.user) {
+            const u = tg.initDataUnsafe.user;
+            name = u.first_name + (u.last_name ? " " + u.last_name : "");
+            avatar = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=111827&color=fff`;
         }
-      };
-      box.appendChild(div);
+        document.getElementById('userName').innerText = name;
+        document.getElementById('userAvatar').src = avatar;
+    }
+
+    // Popular
+    async function loadPopular(force=false) {
+        if (!force && popularData) { renderPopular(popularData); return; }
+        let data = getCache("popular");
+        if (!data || force) {
+            try {
+                const res = await fetch(`${API_URL}/api/top?limit=12`);
+                data = await res.json();
+                setCache("popular", data);
+            } catch(e) { console.error(e); }
+        }
+        if (data) { popularData = data; renderPopular(data); }
+    }
+
+    function renderPopular(items) {
+        const c = document.getElementById('popularContainer');
+        c.innerHTML = "";
+        if (!items || !items.length) { c.innerHTML = "<div style='padding:20px;color:var(--muted);text-align:center'>چیزی نیست</div>"; return; }
+        items.forEach(m => {
+            const [g1,g2] = pickGenres(m.genres);
+            const el = document.createElement('div');
+            el.className = 'movie-card-large';
+            el.onclick = () => openDetail(m.code);
+            el.innerHTML = `
+                <div class="poster-container">
+                    <img src="${m.poster}" class="poster-img" loading="lazy">
+                    <div class="poster-overlay"></div>
+                    <div class="card-info">
+                        <div class="movie-title">${safeText(m.title)}</div>
+                        <div class="rating-row"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote||0} ${m.year?'• '+m.year:''}</div>
+                        <div class="tags"><span class="tag">${g1}</span><span class="tag">${g2}</span></div>
+                    </div>
+                </div>
+            `;
+            c.appendChild(el);
+        });
+    }
+
+    // Main List
+    async function loadMain(reset=true) {
+        if (loading) return;
+        loading = true;
+        const page = isSearching ? searchPage : currentPage;
+        const cont = document.getElementById('newContainer');
+        const btn = document.getElementById('btnLoadMore');
+
+        if (reset) {
+            if (isSearching) searchPage = 1; else currentPage = 1;
+            cont.innerHTML = "<div class='skeleton' style='height:86px;border-radius:18px;margin-bottom:12px'></div>".repeat(5);
+            btn.style.display = 'none';
+        }
+
+        const cacheKey = `list_${currentType}_${page}_${isSearching?searchQuery:'normal'}`;
+        let data = getCache(cacheKey);
+
+        if (!data) {
+            try {
+                const url = new URL(`${API_URL}/api/movies`);
+                url.searchParams.set("page", page);
+                url.searchParams.set("limit", 12);
+                if (currentType) url.searchParams.set("type", currentType);
+                if (isSearching && searchQuery) url.searchParams.set("q", searchQuery);
+                const res = await fetch(url);
+                data = await res.json();
+                setCache(cacheKey, data);
+            } catch(e) { console.error(e); data = null; }
+        }
+
+        if (reset) cont.innerHTML = "";
+        renderMain(data?.items || []);
+
+        const tp = data?.total_pages || 1;
+        if (isSearching) searchTotalPages = tp; else totalPages = tp;
+
+        btn.style.display = 'block';
+        btn.disabled = page >= tp;
+        btn.innerText = page >= tp ? "پایان" : "نمایش بیشتر";
+
+        loading = false;
+    }
+
+    function renderMain(items) {
+        const cont = document.getElementById('newContainer');
+        if (!items.length) {
+            cont.innerHTML += "<div style='color:var(--muted);padding:20px;text-align:center'>موردی یافت نشد</div>";
+            return;
+        }
+        items.forEach(m => {
+            const [g1,g2] = pickGenres(m.genres);
+            const el = document.createElement('div');
+            el.className = 'movie-card-small';
+            el.onclick = () => openDetail(m.code);
+            el.innerHTML = `
+                <img src="${m.poster}" class="small-poster" loading="lazy">
+                <div class="small-info">
+                    <div class="small-title">${safeText(m.title)}</div>
+                    <div class="small-meta">
+                        <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote||0}</span>
+                        ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${m.year}</span>` : ''}
+                        <span class="chip"><i class="bi bi-tags"></i> ${g1}</span>
+                    </div>
+                </div>
+                <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
+            `;
+            cont.appendChild(el);
+        });
+    }
+
+    // Search
+    const searchCont = document.getElementById('searchContainer');
+    const searchInp = document.getElementById('searchInput');
+    const clearBtn = document.getElementById('btnClearSearch');
+
+    document.getElementById('btnSearch').onclick = () => {
+        haptic();
+        const show = !searchCont.classList.contains('show');
+        searchCont.classList.toggle('show', show);
+        if (show) searchInp.focus();
+    };
+
+    clearBtn.onclick = () => { searchInp.value = ""; clearBtn.classList.remove('show'); if (isSearching) exitSearch(); };
+    searchInp.oninput = () => clearBtn.classList.toggle('show', searchInp.value.trim().length > 0);
+    searchInp.onkeydown = e => { if (e.key==='Enter' && searchInp.value.trim()) doSearch(searchInp.value.trim()); };
+
+    function doSearch(q) {
+        searchQuery = q;
+        isSearching = true;
+        document.getElementById('newTitle').innerHTML = `نتایج: <span style="color:var(--accent)">${safeText(q)}</span>`;
+        loadMain(true);
+    }
+
+    function exitSearch() {
+        isSearching = false; searchQuery = "";
+        document.getElementById('newTitle').innerText = currentType==="movie"?"تازه‌های فیلم":currentType==="series"?"تازه‌های سریال":"تازه‌ها";
+        loadMain(true);
+    }
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(t => t.onclick = () => {
+        currentType = t.dataset.type;
+        document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x===t));
+        if (!isSearching) {
+            document.getElementById('newTitle').innerText = currentType==="movie"?"تازه‌های فیلم":currentType==="series"?"تازه‌های سریال":"تازه‌ها";
+            loadMain(true);
+        } else {
+            doSearch(searchQuery);
+        }
     });
-  }
 
-  window.popTree = function() {
-    if(detailStack.length > 1) {
-      detailStack.pop();
-      renderCurrentTreeLevel();
+    // Load More
+    document.getElementById('btnLoadMore').onclick = () => {
+        if (isSearching) searchPage++; else currentPage++;
+        loadMain(false);
+    };
+
+    // Detail
+    async function openDetail(code) {
+        haptic('medium');
+        detailStack = [];
+        showPage('pageDetail');
+
+        document.getElementById('detailCover').innerHTML = '<div class="skeleton" style="width:100%;height:100%"></div>';
+        document.getElementById('detailTitle').innerText = "در حال بارگذاری...";
+        document.getElementById('treeBox').innerHTML = '<div class="skeleton" style="height:120px;border-radius:18px"></div>';
+
+        try {
+            const [cRes, tRes] = await Promise.all([
+                fetch(`${API_URL}/api/content/${code}`),
+                fetch(`${API_URL}/api/content/${code}/tree`)
+            ]);
+            const content = await cRes.json();
+            const tree = await tRes.json();
+
+            document.getElementById('detailCover').innerHTML = `<img src="${content.poster}" loading="lazy">`;
+            document.getElementById('detailTitle').innerText = content.title;
+            document.getElementById('detailType').innerText = content.type==='series'?'سریال':'فیلم';
+
+            let meta = `<span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${content.vote||0}</span>`;
+            if (content.year) meta += `<span class="chip"><i class="bi bi-calendar3"></i> ${content.year}</span>`;
+            document.getElementById('detailMeta').innerHTML = meta;
+
+            document.getElementById('detailOverview').innerText = content.overview || "خلاصه موجود نیست.";
+
+            detailStack = [{nodes: tree.tree || []}];
+            renderTree();
+        } catch(e) {
+            document.getElementById('treeBox').innerHTML = "<div style='color:var(--accent);padding:20px;text-align:center'>خطا در بارگذاری</div>";
+        }
     }
-  }
 
-  window.goBack = function() {
-    if(document.getElementById('pageDetail').classList.contains('active')) {
-      document.getElementById('pageDetail').classList.remove('active');
-      document.getElementById('pageHome').classList.add('active');
-    } else if(document.getElementById('searchWrap').classList.contains('show')) {
-      toggleSearch();
+    function renderTree() {
+        const box = document.getElementById('treeBox');
+        const level = detailStack[detailStack.length-1];
+        const nodes = level.nodes || [];
+        box.innerHTML = "";
+
+        if (detailStack.length > 1) {
+            const back = document.createElement('div');
+            back.className = "node";
+            back.onclick = () => { haptic(); detailStack.pop(); renderTree(); };
+            back.innerHTML = `<div class="node-left"><i class="bi bi-arrow-right"></i><div class="node-text">بازگشت</div></div>`;
+            box.appendChild(back);
+        }
+
+        if (!nodes.length) {
+            box.innerHTML = "<div style='color:var(--muted);padding:20px;text-align:center'>کیفیتی موجود نیست</div>";
+            return;
+        }
+
+        nodes.forEach(n => {
+            const el = document.createElement('div');
+            el.className = "node";
+            el.onclick = () => {
+                if (n.media_type === "folder") {
+                    haptic();
+                    detailStack.push({nodes: n.children || []});
+                    renderTree();
+                } else {
+                    haptic('medium');
+                    el.style.opacity = "0.6";
+                    el.querySelector('.node-right').innerText = "در حال ارسال...";
+                    tg.sendData(`GET:${n.id}`);
+                    setTimeout(() => el.querySelector('.node-right').innerText = "ارسال شد ✓", 800);
+                }
+            };
+            el.innerHTML = `
+                <div class="node-left">
+                    <i class="bi ${n.media_type==='folder'?'bi-folder2-open':'bi-download'}"></i>
+                    <div class="node-text">${safeText(n.text)}</div>
+                </div>
+                <div class="node-right">${n.media_type==='folder'?'باز کن':'دانلود'}</div>
+            `;
+            box.appendChild(el);
+        });
     }
-  }
 
-  window.goHome = function() {
-    cancelSearch();
-    document.getElementById('pageDetail').classList.remove('active');
-    document.getElementById('pageHome').classList.add('active');
-    window.scrollTo(0,0);
-  }
+    document.getElementById('detailBack').onclick = () => { haptic(); showPage('pageHome'); detailStack = []; };
 
-  // Start
-  setupUser();
-  loadDashboard();
+    // Nav
+    const setNav = id => document.querySelectorAll('.nav-item').forEach(x=>x.classList.toggle('active', x.id===id));
+    document.getElementById('navHome').onclick = () => { setNav('navHome'); showPage('pageHome'); scrollTo(0,0); };
+    document.getElementById('navTop').onclick = () => { setNav('navTop'); showPage('pageHome'); document.querySelector('#popularContainer').scrollIntoView({behavior:'smooth'}); };
+    document.getElementById('navNew').onclick = () => { setNav('navNew'); showPage('pageHome'); document.querySelector('#newContainer').scrollIntoView({behavior:'smooth'}); };
 
+    // Refresh
+    document.getElementById('btnRefresh').onclick = () => {
+        haptic();
+        localStorage.clear();
+        popularData = null;
+        loadPopular(true);
+        loadMain(true);
+    };
+
+    document.getElementById('refreshPopular').onclick = e => { e.preventDefault(); loadPopular(true); };
+    document.getElementById('refreshNew').onclick = e => { e.preventDefault(); loadMain(true); };
+
+    // Init
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.toggle('active', p.id===id));
+    }
+
+    setupUser();
+    loadPopular();
+    loadMain(true);
 </script>
 </body>
 </html>
