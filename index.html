@@ -192,36 +192,89 @@
       padding: 10px 14px 18px;
       display:flex;gap:10px;justify-content:space-between;z-index:20;
     }
+        /* SEARCH UI (RTL-friendly) */
+    .search-wrap{
+    display:none;
+    width:100%;
+    padding: 10px 20px 14px;
+    }
+    .search-wrap.show{ display:block; }
+
+    .search-box{
+    position:relative;
+    }
+    .search-box input{
+    width:100%;
+    padding: 14px 44px 14px 44px; /* راست: آیکون، چپ: دکمه پاک کردن */
+    border-radius:16px;
+    border:1px solid var(--line);
+    background:var(--card);
+    color:#fff;
+    font-family:inherit;
+    }
+    .search-ico{
+    position:absolute;
+    right:14px;
+    top:50%;
+    transform:translateY(-50%);
+    color:var(--muted);
+    font-size:18px;
+    }
+    .clear-btn{
+    position:absolute;
+    left:10px;
+    top:50%;
+    transform:translateY(-50%);
+    width:34px;
+    height:34px;
+    border-radius:12px;
+    border:1px solid var(--line);
+    background: rgba(255,255,255,0.06);
+    color: var(--muted);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    }
+    .clear-btn.show{ display:flex; }
+
     .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;cursor:pointer;user-select:none;}
     .nav-item i{font-size:20px}
     .nav-item.active{color:#fff}
+
   </style>
 </head>
 
 <body>
 
-  <!-- Header -->
-  <div class="header">
+    <!-- Header -->
+    <div class="header">
     <div class="user-profile">
-      <img src="" class="avatar" id="userAvatar" alt="avatar">
-      <div>
+        <img src="" class="avatar" id="userAvatar" alt="avatar">
+        <div>
         <div class="welcome-text">خوش اومدی 👋</div>
         <div class="username-text" id="userName">کاربر عزیز</div>
-      </div>
+        </div>
     </div>
+
     <div class="header-actions">
         <div class="icon-btn" id="btnSearch" title="جستجو"><i class="bi bi-search"></i></div>
         <div class="icon-btn" id="btnRefresh" title="رفرش"><i class="bi bi-arrow-repeat"></i></div>
         <div class="icon-btn" id="btnMenu" title="منو"><i class="bi bi-list"></i></div>
     </div>
-    <div id="searchContainer" style="display:none; padding: 0 20px 10px;">
-    <div style="position:relative;">
-      <input type="text" id="searchInput" placeholder="نام فیلم یا سریال را بنویسید..." 
-             style="width:100%; padding:14px 16px; border-radius:16px; border:1px solid var(--line); background:var(--card); color:#fff; font-family:inherit; padding-left: 40px;">
-      <i class="bi bi-search" style="position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted)"></i>
+
+    <!-- ✅ Search (درست داخل header) -->
+    <div id="searchContainer" class="search-wrap">
+        <div class="search-box">
+        <i class="bi bi-search search-ico"></i>
+        <input type="text" id="searchInput" placeholder="نام فیلم یا سریال را بنویسید...">
+        <button id="btnClearSearch" class="clear-btn" type="button" aria-label="پاک کردن">
+            <i class="bi bi-x-lg"></i>
+        </button>
+        </div>
     </div>
-  </div>
-  </div>
+    </div>
+
 
   <!-- HOME PAGE -->
   <div id="pageHome" class="page active">
@@ -325,81 +378,106 @@
     function safeText(s) {
       return (s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
-    // 🔍 Search Logic
-    let searchTimeout;
-    const searchContainer = document.getElementById('searchContainer');
-    const searchInput = document.getElementById('searchInput');
+    // 🔍 Search Logic (FIXED + Better UI)
+let searchTimeout;
+let isSearching = false;
 
-    // 1. باز و بسته کردن کادر جستجو
-    document.getElementById('btnSearch').addEventListener('click', () => {
-      haptic('light');
-      const isHidden = searchContainer.style.display === 'none';
-      searchContainer.style.display = isHidden ? 'block' : 'none';
-      
-      if (isHidden) {
-        searchInput.focus(); // فوکوس خودکار روی اینپوت
-      } else {
-        searchInput.value = ""; // پاک کردن متن هنگام بستن
-        fetchNew(true); // برگشت به حالت عادی
-        document.getElementById('newTitle').innerText = "تازه‌ها";
-      }
-    });
+const searchWrap = document.getElementById('searchContainer');
+const searchInput = document.getElementById('searchInput');
+const btnClearSearch = document.getElementById('btnClearSearch');
 
-    // 2. لاجیک تایپ کردن (با Debounce)
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.trim();
-      
-      // پاک کردن تایمر قبلی (اگر کاربر تند تند تایپ کنه)
+function setSearchUI(open){
+  searchWrap.classList.toggle('show', open);
+  if(open){
+    searchInput.focus();
+  } else {
+    searchInput.value = "";
+    btnClearSearch.classList.remove('show');
+    exitSearchMode();
+  }
+}
+
+function enterSearchMode(q){
+  isSearching = true;
+  document.getElementById('btnLoadMore').style.display = 'none';
+  const titleEl = document.getElementById('newTitle');
+  titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
+}
+
+function exitSearchMode(){
+  isSearching = false;
+  document.getElementById('btnLoadMore').style.display = 'block';
+  document.getElementById('newTitle').innerText = "تازه‌ها";
+  fetchNew(true);
+}
+
+// دکمه سرچ: باز/بسته
+document.getElementById('btnSearch').addEventListener('click', () => {
+  haptic('light');
+  const open = !searchWrap.classList.contains('show');
+  setSearchUI(open);
+});
+
+// پاک کردن سریع
+btnClearSearch.addEventListener('click', () => {
+  haptic('light');
+  searchInput.value = "";
+  btnClearSearch.classList.remove('show');
+  exitSearchMode();
+  searchInput.focus();
+});
+
+// تایپ با debounce
+searchInput.addEventListener('input', (e) => {
+  const q = e.target.value.trim();
+  btnClearSearch.classList.toggle('show', q.length > 0);
+
+  clearTimeout(searchTimeout);
+
+  if(q.length === 0){
+    exitSearchMode();
+    return;
+  }
+
+  searchTimeout = setTimeout(() => performSearch(q), 450);
+});
+
+// Enter برای سرچ سریع
+searchInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter'){
+    const q = searchInput.value.trim();
+    if(q){
       clearTimeout(searchTimeout);
-
-      if (query.length === 0) {
-        document.getElementById('newTitle').innerText = "تازه‌ها";
-        fetchNew(true);
-        return;
-      }
-
-      // تنظیم تایمر جدید (۶۰۰ میلی‌ثانیه بعد از آخرین تایپ اجرا میشه)
-      searchTimeout = setTimeout(() => {
-        performSearch(query);
-      }, 600);
-    });
-
-    async function performSearch(q) {
-      // تغییر تیتر برای اینکه کاربر بفهمه داریم میگردیم
-      const titleEl = document.getElementById('newTitle');
-      titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
-      
-      // نمایش اسکلتون (لدرینگ) در لیست پایین
-      const container = document.getElementById('newContainer');
-      container.innerHTML = `
-        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-      `;
-
-      try {
-        // ساخت آدرس API با پارامتر q
-        const url = new URL(`${API_URL}/api/movies`);
-        url.searchParams.set("q", q);
-        url.searchParams.set("limit", 20); // در سرچ تعداد بیشتر نشون بدیم
-
-        const res = await fetch(url.toString());
-        const data = await res.json();
-
-        // نمایش نتایج با تابع رندر قبلی
-        renderNew(data.items || []);
-        
-        // مخفی کردن دکمه "نمایش بیشتر" در حالت سرچ
-        document.getElementById('btnLoadMore').style.display = 'none';
-
-      } catch (e) {
-        console.error(e);
-        container.innerHTML = `<div style="color:var(--muted);font-size:12px">خطا در جستجو.</div>`;
-      }
+      performSearch(q);
     }
-    function pickGenres(genresStr) {
-      const arr = (genresStr || "").split(",").map(s => s.trim()).filter(Boolean);
-      return [arr[0] || "Movie", arr[1] || "HD"];
-    }
+  }
+});
+
+async function performSearch(q){
+  enterSearchMode(q);
+
+  const container = document.getElementById('newContainer');
+  container.innerHTML = `
+    <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+    <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+  `;
+
+  try{
+    const url = new URL(`${API_URL}/api/movies`);
+    url.searchParams.set("q", q);
+    url.searchParams.set("limit", 20);
+    if(currentType) url.searchParams.set("type", currentType); // فیلتر تب‌ها روی سرچ هم اعمال میشه
+
+    const res = await fetch(url.toString());
+    const data = await res.json();
+
+    renderNew(data.items || []);
+  } catch(e){
+    console.error(e);
+    container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">خطا در جستجو.</div>`;
+  }
+}
+
 
     function setupUser() {
       let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=111827&color=fff";
