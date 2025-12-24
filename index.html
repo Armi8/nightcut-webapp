@@ -347,137 +347,44 @@
     <div class="nav-item" id="navBack"><i class="bi bi-arrow-left-circle"></i><div>برگشت</div></div>
   </div>
 
-  <script>
+<script>
     const tg = window.Telegram.WebApp;
     tg.expand();
     tg.setHeaderColor('#0f1014');
 
-    // ✅ آدرس API خودت
+    // ✅ دریافت آدرس API
     const urlParams = new URLSearchParams(window.location.search);
-    
-    // ۲. گرفتن آدرس API از پارامتر 'api'
-    // اگر ربات لینکی نداد، از آدرس پیش‌فرض (تست لوکال) استفاده کن
     const API_URL = urlParams.get('api') || "http://127.0.0.1:8000";
-
-    // برای دیباگ (تو کنسول مرورگر نشون میده به کجا وصل شده)
     console.log("Connected to API:", API_URL);
 
-    // 👆👆👆 پایان تغییرات 👆👆👆
-
-    // state
+    // --- State Variables ---
     let currentType = "";
     let currentPage = 1;
     const limit = 12;
     let totalPages = 1;
     let loadingMore = false;
+    
+    // Search State
+    let searchTimeout;
+    let isSearching = false;
 
-    // detail state
-    let detailStack = []; // برای نویگیشن داخل tree (folder ها)
+    // Detail State
+    let detailStack = [];
     let currentDetailCode = null;
 
+    // --- Helper Functions ---
     function safeText(s) {
       return (s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
     }
-    // 🔍 Search Logic (FIXED + Better UI)
-let searchTimeout;
-let isSearching = false;
 
-const searchWrap = document.getElementById('searchContainer');
-const searchInput = document.getElementById('searchInput');
-const btnClearSearch = document.getElementById('btnClearSearch');
-
-function setSearchUI(open){
-  searchWrap.classList.toggle('show', open);
-  if(open){
-    searchInput.focus();
-  } else {
-    searchInput.value = "";
-    btnClearSearch.classList.remove('show');
-    exitSearchMode();
-  }
-}
-
-function enterSearchMode(q){
-  isSearching = true;
-  document.getElementById('btnLoadMore').style.display = 'none';
-  const titleEl = document.getElementById('newTitle');
-  titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
-}
-
-function exitSearchMode(){
-  isSearching = false;
-  document.getElementById('btnLoadMore').style.display = 'block';
-  document.getElementById('newTitle').innerText = "تازه‌ها";
-  fetchNew(true);
-}
-
-// دکمه سرچ: باز/بسته
-document.getElementById('btnSearch').addEventListener('click', () => {
-  haptic('light');
-  const open = !searchWrap.classList.contains('show');
-  setSearchUI(open);
-});
-
-// پاک کردن سریع
-btnClearSearch.addEventListener('click', () => {
-  haptic('light');
-  searchInput.value = "";
-  btnClearSearch.classList.remove('show');
-  exitSearchMode();
-  searchInput.focus();
-});
-
-// تایپ با debounce
-searchInput.addEventListener('input', (e) => {
-  const q = e.target.value.trim();
-  btnClearSearch.classList.toggle('show', q.length > 0);
-
-  clearTimeout(searchTimeout);
-
-  if(q.length === 0){
-    exitSearchMode();
-    return;
-  }
-
-  searchTimeout = setTimeout(() => performSearch(q), 450);
-});
-
-// Enter برای سرچ سریع
-searchInput.addEventListener('keydown', (e) => {
-  if(e.key === 'Enter'){
-    const q = searchInput.value.trim();
-    if(q){
-      clearTimeout(searchTimeout);
-      performSearch(q);
+    function haptic(type='light'){
+      try { tg.HapticFeedback.impactOccurred(type); } catch(e){}
     }
-  }
-});
 
-async function performSearch(q){
-  enterSearchMode(q);
-
-  const container = document.getElementById('newContainer');
-  container.innerHTML = `
-    <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-    <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-  `;
-
-  try{
-    const url = new URL(`${API_URL}/api/movies`);
-    url.searchParams.set("q", q);
-    url.searchParams.set("limit", 20);
-    if(currentType) url.searchParams.set("type", currentType); // فیلتر تب‌ها روی سرچ هم اعمال میشه
-
-    const res = await fetch(url.toString());
-    const data = await res.json();
-
-    renderNew(data.items || []);
-  } catch(e){
-    console.error(e);
-    container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">خطا در جستجو.</div>`;
-  }
-}
-
+    function pickGenres(genresStr) {
+      const arr = (genresStr || "").split(",").map(s => s.trim()).filter(Boolean);
+      return [arr[0] || "Movie", arr[1] || "HD"];
+    }
 
     function setupUser() {
       let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=111827&color=fff";
@@ -496,11 +403,174 @@ async function performSearch(q){
       document.getElementById(id).classList.add('active');
     }
 
-    function haptic(type='light'){
-      try { tg.HapticFeedback.impactOccurred(type); } catch(e){}
+    // --- Core Data Functions (Must be defined before Search Logic) ---
+    
+    function renderNew(items, append=false) {
+      const container = document.getElementById('newContainer');
+      if (!append) container.innerHTML = "";
+      if (!items || !items.length) {
+        if (!append) container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">موردی برای نمایش نیست.</div>`;
+        return;
+      }
+      items.forEach(m => {
+        const [g1,g2] = pickGenres(m.genres);
+        const card = document.createElement('div');
+        card.className = 'movie-card-small';
+        card.onclick = () => openDetail(m.code);
+        card.innerHTML = `
+          <img src="${m.poster}" class="small-poster" loading="lazy" alt="${safeText(m.title)}">
+          <div class="small-info">
+            <div class="small-title">${safeText(m.title)}</div>
+            <div class="small-meta">
+              <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote ?? 0}</span>
+              ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(m.year)}</span>` : ``}
+              <span class="chip"><i class="bi bi-tags"></i> ${safeText(g1)}</span>
+              <span class="chip"><i class="bi bi-badge-hd"></i> ${safeText(g2)}</span>
+            </div>
+          </div>
+          <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
+        `;
+        container.appendChild(card);
+      });
     }
 
-    // ===== HOME RENDER =====
+    async function fetchNew(reset=true) {
+      try {
+        if (reset) {
+          currentPage = 1;
+          loadingMore = false;
+          document.getElementById('btnLoadMore').disabled = true;
+          document.getElementById('newContainer').innerHTML = `
+            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+          `;
+        }
+
+        const url = new URL(`${API_URL}/api/movies`);
+        url.searchParams.set("page", String(currentPage));
+        url.searchParams.set("limit", String(limit));
+        if (currentType) url.searchParams.set("type", currentType);
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+        totalPages = data.total_pages || 1;
+
+        renderNew(data.items || [], !reset);
+
+        const btn = document.getElementById('btnLoadMore');
+        // در حالت سرچ دکمه "نمایش بیشتر" را مخفی نگه دار
+        if (isSearching) {
+            btn.style.display = 'none';
+        } else {
+            btn.style.display = 'block';
+            btn.disabled = (currentPage >= totalPages);
+            btn.innerText = (currentPage >= totalPages) ? "پایان لیست" : "نمایش بیشتر";
+        }
+      } catch (e) { console.error(e); }
+    }
+
+    // --- Search Logic ---
+    const searchWrap = document.getElementById('searchContainer');
+    const searchInput = document.getElementById('searchInput');
+    const btnClearSearch = document.getElementById('btnClearSearch');
+
+    function setSearchUI(open){
+      searchWrap.classList.toggle('show', open);
+      if(open){
+        searchInput.focus();
+      } else {
+        searchInput.value = "";
+        btnClearSearch.classList.remove('show');
+        // اگر قبلاً سرچ کرده بودیم و الان بستیم، برگردیم به حالت عادی
+        if(isSearching) exitSearchMode();
+      }
+    }
+
+    function enterSearchMode(q){
+      isSearching = true;
+      document.getElementById('btnLoadMore').style.display = 'none';
+      const titleEl = document.getElementById('newTitle');
+      titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
+    }
+
+    function exitSearchMode(){
+      isSearching = false;
+      document.getElementById('btnLoadMore').style.display = 'block';
+      document.getElementById('newTitle').innerText = (currentType === "movie" ? "تازه‌های فیلم" : currentType === "series" ? "تازه‌های سریال" : "تازه‌ها");
+      fetchNew(true);
+    }
+
+    // دکمه سرچ (هدر)
+    document.getElementById('btnSearch').addEventListener('click', () => {
+      haptic('light');
+      const open = !searchWrap.classList.contains('show');
+      setSearchUI(open);
+    });
+
+    // دکمه ضربدر
+    btnClearSearch.addEventListener('click', () => {
+      haptic('light');
+      searchInput.value = "";
+      btnClearSearch.classList.remove('show');
+      exitSearchMode();
+      searchInput.focus();
+    });
+
+    // تایپ
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim();
+      btnClearSearch.classList.toggle('show', q.length > 0);
+
+      clearTimeout(searchTimeout);
+
+      if(q.length === 0){
+        // اگر متن پاک شد ولی هنوز در حالت سرچ هستیم، خارج شو
+        if(isSearching) exitSearchMode();
+        return;
+      }
+
+      searchTimeout = setTimeout(() => performSearch(q), 500);
+    });
+
+    // اینتر
+    searchInput.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){
+        const q = searchInput.value.trim();
+        if(q){
+          clearTimeout(searchTimeout);
+          performSearch(q);
+          searchInput.blur(); // بستن کیبورد موبایل
+        }
+      }
+    });
+
+    async function performSearch(q){
+      enterSearchMode(q);
+
+      const container = document.getElementById('newContainer');
+      container.innerHTML = `
+        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
+      `;
+
+      try{
+        const url = new URL(`${API_URL}/api/movies`);
+        url.searchParams.set("q", q);
+        url.searchParams.set("limit", 20);
+        if(currentType) url.searchParams.set("type", currentType); 
+
+        const res = await fetch(url.toString());
+        const data = await res.json();
+
+        renderNew(data.items || []);
+      } catch(e){
+        console.error(e);
+        container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">خطا در جستجو.</div>`;
+      }
+    }
+
+    // --- Popular & Load More Logic ---
+    
     function renderPopular(movies) {
       const container = document.getElementById('popularContainer');
       container.innerHTML = "";
@@ -535,69 +605,11 @@ async function performSearch(q){
       });
     }
 
-    function renderNew(items, append=false) {
-      const container = document.getElementById('newContainer');
-      if (!append) container.innerHTML = "";
-      if (!items || !items.length) {
-        if (!append) container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">موردی برای نمایش نیست.</div>`;
-        return;
-      }
-      items.forEach(m => {
-        const [g1,g2] = pickGenres(m.genres);
-        const card = document.createElement('div');
-        card.className = 'movie-card-small';
-        card.onclick = () => openDetail(m.code);
-        card.innerHTML = `
-          <img src="${m.poster}" class="small-poster" loading="lazy" alt="${safeText(m.title)}">
-          <div class="small-info">
-            <div class="small-title">${safeText(m.title)}</div>
-            <div class="small-meta">
-              <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote ?? 0}</span>
-              ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(m.year)}</span>` : ``}
-              <span class="chip"><i class="bi bi-tags"></i> ${safeText(g1)}</span>
-              <span class="chip"><i class="bi bi-badge-hd"></i> ${safeText(g2)}</span>
-            </div>
-          </div>
-          <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
     async function fetchPopular() {
       try {
         const res = await fetch(`${API_URL}/api/top?limit=10`);
         const data = await res.json();
         renderPopular(data);
-      } catch (e) { console.error(e); }
-    }
-
-    async function fetchNew(reset=true) {
-      try {
-        if (reset) {
-          currentPage = 1;
-          loadingMore = false;
-          document.getElementById('btnLoadMore').disabled = true;
-          document.getElementById('newContainer').innerHTML = `
-            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-          `;
-        }
-
-        const url = new URL(`${API_URL}/api/movies`);
-        url.searchParams.set("page", String(currentPage));
-        url.searchParams.set("limit", String(limit));
-        if (currentType) url.searchParams.set("type", currentType);
-
-        const res = await fetch(url.toString());
-        const data = await res.json();
-        totalPages = data.total_pages || 1;
-
-        renderNew(data.items || [], !reset);
-
-        const btn = document.getElementById('btnLoadMore');
-        btn.disabled = (currentPage >= totalPages);
-        btn.innerText = (currentPage >= totalPages) ? "پایان لیست" : "نمایش بیشتر";
       } catch (e) { console.error(e); }
     }
 
@@ -613,9 +625,16 @@ async function performSearch(q){
     function setActiveTab(type) {
       currentType = type;
       document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
-      const title = document.getElementById('newTitle');
-      title.innerText = type === "movie" ? "تازه‌های فیلم" : type === "series" ? "تازه‌های سریال" : "تازه‌ها";
-      fetchNew(true);
+      // اگر در حال جستجو هستیم، فقط متغیر را ست کن، تایتل را عوض نکن
+      if (!isSearching) {
+          const title = document.getElementById('newTitle');
+          title.innerText = type === "movie" ? "تازه‌های فیلم" : type === "series" ? "تازه‌های سریال" : "تازه‌ها";
+          fetchNew(true);
+      } else {
+          // اگر در حال جستجو بودیم و تب عوض شد، دوباره با فیلتر جدید سرچ کن
+          const q = searchInput.value.trim();
+          if (q) performSearch(q);
+      }
     }
 
     document.querySelectorAll('.tab').forEach(tab => {
@@ -630,7 +649,7 @@ async function performSearch(q){
     async function openDetail(code){
       haptic('medium');
       currentDetailCode = code;
-      detailStack = []; // reset navigation stack
+      detailStack = [];
       showPage('pageDetail');
 
       // skeleton
@@ -691,7 +710,6 @@ async function performSearch(q){
 
       box.innerHTML = "";
 
-      // اگر داخل فولدر هستیم، دکمه برگشت داخل باکس هم بده
       if (detailStack.length > 1){
         const backNode = document.createElement('div');
         backNode.className = "node";
@@ -716,7 +734,6 @@ async function performSearch(q){
             detailStack.push({ title: n.text, nodes: n.children || [] });
             renderTreeLevel();
           } else {
-            // ✅ دانلود: variation_id به ربات
             haptic('medium');
             tg.sendData(`GET:${n.id}`);
           }
