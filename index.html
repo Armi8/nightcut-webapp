@@ -1,15 +1,24 @@
 <!doctype html>
-<html lang="en" dir="ltr">
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <title>NightCut MiniApp</title>
+  <!-- Vazir font -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazir-font@v30.1.0/dist/font-face.css">
 
-  <!-- Telegram WebApp -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Swiper (Top Picks Slider) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- Lucide icons (stroke icons) -->
+  <script defer src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Telegram WebApp -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
@@ -29,7 +38,7 @@
     html,body{height:100%}
     body{
       margin:0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-family: Vazir, Vazirmatn, system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
       color:var(--text);
       background:
         radial-gradient(900px 600px at 15% 10%, rgba(168,85,247,.18), transparent 55%),
@@ -532,6 +541,121 @@
 
     /* Minimal icons */
     .i{font-style:normal; font-weight:900}
+    /* ===== Hero Swiper (Top Picks) ===== */
+    .heroSwiper{
+      border-radius: var(--radius);
+      overflow:hidden;
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      background: rgba(18,19,26,0.70);
+      padding: 10px 0 18px;
+    }
+
+    .heroSwiper .swiper-slide{
+      padding: 0 10px;
+      opacity: .7;
+      transform: scale(.93);
+      transition: transform .35s ease, opacity .35s ease;
+    }
+
+    .heroSwiper .swiper-slide-active{
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .heroCard{
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 220px;
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.08);
+    }
+
+    .heroCard img{
+      width:100%; height:100%;
+      object-fit: cover;
+      display:block;
+      filter: saturate(1.05) contrast(1.05);
+    }
+
+    .heroOverlay{
+      position:absolute; inset:0;
+      background: linear-gradient(90deg, rgba(0,0,0,.62), rgba(0,0,0,.15));
+    }
+
+    .heroMeta{
+      position:absolute;
+      left:12px; right:12px; bottom:12px;
+    }
+
+    .heroTag{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      font-size:12px;
+      color:rgba(255,255,255,.78);
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.10);
+      backdrop-filter: blur(12px);
+    }
+
+    .heroTitle2{
+      margin-top:10px;
+      font-weight:900;
+      font-size:18px;
+      line-height:1.15;
+    }
+
+    .heroSub2{
+      margin-top:6px;
+      font-size:12px;
+      color:rgba(255,255,255,.72);
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+
+    .heroSwiper .swiper-pagination-bullet{
+      background: rgba(255,255,255,.28);
+      opacity: 1;
+    }
+    .heroSwiper .swiper-pagination-bullet-active{
+      background: rgba(255,255,255,.85);
+    }
+
+        /* ===== Latest tabs ===== */
+    .seg{
+      display:flex;
+      gap:6px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      padding:4px;
+      border-radius:999px;
+      backdrop-filter: blur(12px);
+    }
+    .segBtn{
+      border:0;
+      background:transparent;
+      color:rgba(255,255,255,.70);
+      padding:7px 10px;
+      border-radius:999px;
+      cursor:pointer;
+      font-family: inherit;
+      font-weight:800;
+      font-size:12px;
+    }
+    .segBtn.active{
+      background: rgba(255,255,255,.14);
+      color:#fff;
+    }
+    .tabPane{ display:none; }
+    .tabPane.active{ display:block; }
+
+
   </style>
 </head>
 
@@ -567,23 +691,27 @@
       </div>
 
       <div class="section">
-        <div class="hero" id="hero">
-          <div class="heroRow">
-            <div class="heroPoster skeleton" id="heroPoster"></div>
-            <div class="heroInfo">
-              <div>
-                <div class="tag"><span class="pill" id="heroType">Loading</span> <span class="muted" id="heroYear">—</span></div>
-                <div class="heroTitle skeleton" style="height:20px; width:80%; border-radius:10px" id="heroTitleSk"></div>
-                <div class="heroSub skeleton" style="height:48px; border-radius:12px" id="heroSubSk"></div>
-              </div>
-              <div class="heroCtas">
-                <button class="btn" id="heroOpen">Open</button>
-                <button class="btn secondary" id="heroSave">+ Watchlist</button>
-              </div>
-            </div>
+        <div class="sectionHead" style="gap:10px;">
+          <h3>Latest</h3>
+
+          <div class="seg">
+            <button class="segBtn active" data-tab="movie">فیلم</button>
+            <button class="segBtn" data-tab="series">سریال</button>
           </div>
+
+          <div class="seeAll" id="latestMore">See All</div>
+        </div>
+
+        <div class="tabPane active" id="pane-movie">
+          <div class="hscroll" id="latestMovies"></div>
+        </div>
+
+        <div class="tabPane" id="pane-series">
+          <div class="hscroll" id="latestSeries"></div>
         </div>
       </div>
+
+
 
       <div class="section">
         <div class="sectionHead">
@@ -762,20 +890,16 @@
   const avatar = document.getElementById("avatar");
   const bellDot = document.getElementById("bellDot");
 
-  const heroPoster = document.getElementById("heroPoster");
-  const heroType = document.getElementById("heroType");
-  const heroYear = document.getElementById("heroYear");
-  const heroOpen = document.getElementById("heroOpen");
-  const heroSave = document.getElementById("heroSave");
-  const heroTitleSk = document.getElementById("heroTitleSk");
-  const heroSubSk = document.getElementById("heroSubSk");
+
 
   const searchInput = document.getElementById("searchInput");
 
   const catsWrap = document.getElementById("cats");
   const catsReset = document.getElementById("catsReset");
 
-  const latestRow = document.getElementById("latestRow");
+  const latestMovies = document.getElementById("latestMovies");
+  const latestSeries = document.getElementById("latestSeries");
+
   const trendingRow = document.getElementById("trendingRow");
   const latestMore = document.getElementById("latestMore");
   const trendingMore = document.getElementById("trendingMore");
@@ -916,34 +1040,47 @@
     });
   }
 
-  function setHero(item){
-    heroItem = item;
-    heroPoster.classList.remove("skeleton");
-    heroPoster.innerHTML = `<img src="${escapeHtml(item.poster)}" alt="${escapeHtml(item.title)}" />`;
+  let heroSwiperInstance = null;
 
-    heroType.textContent = item.type === "series" ? "TV" : "MOVIE";
-    heroYear.textContent = item.year || "—";
+  function renderTopPicks(items){
+    const wrap = document.getElementById("topPicksWrapper");
+    if(!wrap) return;
 
-    // replace skeleton title/sub
-    heroTitleSk.classList.remove("skeleton");
-    heroSubSk.classList.remove("skeleton");
-    heroTitleSk.style.height = "auto";
-    heroSubSk.style.height = "auto";
-    heroTitleSk.style.width = "auto";
-    heroTitleSk.style.borderRadius = "0";
-    heroSubSk.style.borderRadius = "0";
+    wrap.innerHTML = items.slice(0, 10).map((it, idx)=>`
+      <div class="swiper-slide">
+        <div class="heroCard" data-code="${escapeHtml(it.code)}">
+          <img src="${escapeHtml(it.poster)}" alt="${escapeHtml(it.title)}" />
+          <div class="heroOverlay"></div>
+          <div class="heroMeta">
+            <div class="heroTag">Top ${idx+1} • ${it.type === "series" ? "سریال" : "فیلم"} • ${escapeHtml(it.year || "")}</div>
+            <div class="heroTitle2">${escapeHtml(it.title || "—")}</div>
+            <div class="heroSub2">${escapeHtml(it.overview || "بدون توضیح")}</div>
+          </div>
+        </div>
+      </div>
+    `).join("");
 
-    heroTitleSk.className = "heroTitle";
-    heroSubSk.className = "heroSub";
-    heroTitleSk.textContent = item.title || "—";
-    heroSubSk.textContent = item.overview || "No description available.";
+    // click open details
+    wrap.querySelectorAll(".heroCard").forEach(card=>{
+      card.addEventListener("click", ()=>{
+        openDetails(card.getAttribute("data-code"));
+      });
+    });
 
-    heroOpen.onclick = ()=> openDetails(item.code);
-    heroSave.onclick = ()=> {
-      const saved = toggleSave(item);
-      heroSave.textContent = saved ? "✓ Watchlist" : "+ Watchlist";
-    };
-    heroSave.textContent = isSaved(item.code) ? "✓ Watchlist" : "+ Watchlist";
+    // init / reinit swiper
+    if (heroSwiperInstance) {
+      heroSwiperInstance.destroy(true, true);
+    }
+
+    heroSwiperInstance = new Swiper(".heroSwiper", {
+      loop: true,
+      centeredSlides: true,
+      slidesPerView: 1.12,
+      spaceBetween: 12,
+      speed: 600,
+      autoplay: { delay: 2800, disableOnInteraction: false },
+      pagination: { el: ".swiper-pagination", clickable: true },
+    });
   }
 
   // --- Details
@@ -1077,20 +1214,20 @@
   async function runSearch(q){
     const query = (q||"").trim();
     if (!query){
-      renderRow(latestRow, latestItems);
+      renderRow(latestMovies, latestItems);
       renderRow(trendingRow, trendingItems);
       return;
     }
 
-    latestRow.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">Searching...</div>`;
+    latestMovies.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">Searching...</div>`;
     trendingRow.innerHTML = ``;
 
     try{
       const data = await jget(api(`/api/movies?page=1&limit=24&q=${encodeURIComponent(query)}`));
       const items = (data.items || []);
       // show in latest row
-      latestRow.innerHTML = items.map(cardTemplate).join("");
-      latestRow.querySelectorAll(".card").forEach(c=>{
+      latestMovies.innerHTML = items.map(cardTemplate).join("");
+      latestMovies.querySelectorAll(".card").forEach(c=>{
         c.addEventListener("click", ()=>{
           const code = c.getAttribute("data-code");
           openDetails(code);
@@ -1099,7 +1236,7 @@
       // hide trending on search
       trendingRow.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;"> </div>`;
     }catch(e){
-      latestRow.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">Search failed.</div>`;
+      latestMovies.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">Search failed.</div>`;
     }
   }
 
@@ -1145,11 +1282,13 @@
       const movies = await jget(api(`/api/movies?page=1&limit=18`));
       latestItems = movies.items || [];
 
-      // Hero pick: prefer top[0], else latest[0]
-      const pick = trendingItems[0] || latestItems[0];
-      if (pick) setHero(pick);
+      // Hero slider = Top Picks (prefer trending, fallback latest)
+      const topPicks = (trendingItems.length ? trendingItems : latestItems);
+      renderTopPicks(topPicks);
 
-      renderRow(latestRow, latestItems);
+
+      renderRow(latestMovies, latestItems.filter(x => x.type !== "series"));
+      renderRow(latestSeries, latestItems.filter(x => x.type === "series"));
       renderRow(trendingRow, trendingItems);
     }catch(e){
       showToast("API error. Check CORS / URL.");
@@ -1173,26 +1312,39 @@
     renderRow(trendingRow, trendingItems);
   });
 
-  latestMore.addEventListener("click", ()=>{
-    showToast("Tip: Use search to browse more");
-    searchInput.focus();
-  });
-  trendingMore.addEventListener("click", ()=>{
-    showToast("Tip: Use search to browse more");
-    searchInput.focus();
+    latestMore.addEventListener("click", ()=>{
+      showToast("Tip: Use search to browse more");
+      searchInput.focus();
+    });
+    trendingMore.addEventListener("click", ()=>{
+      showToast("Tip: Use search to browse more");
+      searchInput.focus();
+    });
+
+    backHome.addEventListener("click", ()=>{
+      openPage("home");
+      renderRow(latestRow, latestItems);
+      renderRow(trendingRow, trendingItems);
+    });
+
+    clearWatchlist.addEventListener("click", ()=>{
+      setWatchlist([]);
+      renderWatchlist();
+      showToast("Cleared");
+    });
+
+    document.addEventListener("click", (e)=>{
+    const btn = e.target.closest(".segBtn");
+    if(!btn) return;
+
+    document.querySelectorAll(".segBtn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const tab = btn.dataset.tab; // movie | series
+    document.querySelectorAll(".tabPane").forEach(p=>p.classList.remove("active"));
+    document.getElementById(`pane-${tab}`)?.classList.add("active");
   });
 
-  backHome.addEventListener("click", ()=>{
-    openPage("home");
-    renderRow(latestRow, latestItems);
-    renderRow(trendingRow, trendingItems);
-  });
-
-  clearWatchlist.addEventListener("click", ()=>{
-    setWatchlist([]);
-    renderWatchlist();
-    showToast("Cleared");
-  });
 
   // bottom nav
   navHome.addEventListener("click", ()=> openPage("home"));
