@@ -589,38 +589,28 @@
      * 1) تنظیم API (فقط این بخش رو با API خودت ست کن)
      *************************************************/
     const API = {
-    // ✅ چون API تو خودش با /api شروع میشه، اینجا فقط دامین/پورت رو بده
-    BASE_URL: "https://YOUR_DOMAIN_OR_IP",  // مثال: http://127.0.0.1:8000
+  BASE_URL: "https://YOUR_DOMAIN_OR_IP", // مثلا: http://127.0.0.1:8000
 
-    endpoints: {
-      top:        "/api/top?limit=12",                 // ترند
-      movies:     (page=1, limit=12, type=null) => {   // جدیدترین‌ها
-        const params = new URLSearchParams({ page, limit });
-        if(type) params.set("type", type);
-        return "/api/movies?" + params.toString();
-      },
-      search:     (q, page=1, limit=20) => {
-        const params = new URLSearchParams({ q, page, limit });
-        return "/api/movies?" + params.toString();
-      },
-      content:    (code) => `/api/content/${encodeURIComponent(code)}`,
-      tree:       (code) => `/api/content/${encodeURIComponent(code)}/tree`,
+  endpoints: {
+    top: "/api/top?limit=12",
+    movies: (page=1, limit=12, type=null) => {
+      const params = new URLSearchParams({ page, limit });
+      if(type) params.set("type", type);
+      return "/api/movies?" + params.toString();
     },
+    search: (q, page=1, limit=20) => {
+      const params = new URLSearchParams({ q, page, limit });
+      return "/api/movies?" + params.toString();
+    },
+    content: (code) => `/api/content/${encodeURIComponent(code)}`,
+    tree: (code) => `/api/content/${encodeURIComponent(code)}/tree`,
+  },
 
-    headers(){
-      return { "Content-Type": "application/json" };
-    }
-  };
+  headers(){
+    return { "Content-Type": "application/json" };
+  }
+};
 
-
-      // اگر API نیاز به هدر/توکن داره اینجا اضافه کن:
-      headers(){
-        return {
-          "Content-Type": "application/json",
-          // "Authorization": "Bearer YOUR_TOKEN"
-        };
-      }
-    };
 
     async function apiGet(path){
       const r = await fetch(API.BASE_URL + path, { headers: API.headers() });
@@ -681,24 +671,24 @@
     function safeText(s){ return (s ?? "").toString(); }
 
     function cardTemplate(item){
-      const poster = item.poster || item.poster_url || item.image || "";
-      const year = (item.year || "").slice(0,4);
-      const sub  = year ? `سال ${year}` : "";
+  const poster = item.poster || "";
+  const title  = item.title  || "—";
+  const year   = (item.year || "").slice(0,4);
+  const sub    = year ? `سال ${year}` : "";
 
-      const sub    = item.subtitle || item.tagline || (item.cast ? item.cast : year);
-      return `
-        <div class="movie-card" data-id="${item.code}">
-          <img class="poster" src="${poster}" alt="${title}" loading="lazy" />
-          <div class="bookmark" data-bookmark="${item.id}">
-            <i class="bi bi-bookmark"></i>
-          </div>
-          <div class="meta">
-            <div class="name">${title}</div>
-            <div class="sub">${safeText(sub)}</div>
-          </div>
-        </div>
-      `;
-    }
+  return `
+    <div class="movie-card" data-id="${item.code}">
+      <img class="poster" src="${poster}" alt="${title}" loading="lazy" />
+      <div class="bookmark" data-bookmark="${item.code}">
+        <i class="bi bi-bookmark"></i>
+      </div>
+      <div class="meta">
+        <div class="name">${title}</div>
+        <div class="sub">${safeText(sub)}</div>
+      </div>
+    </div>
+  `;
+}
 
     function setActiveChip(id){
       [...document.querySelectorAll(".chip")].forEach(c => c.classList.remove("active"));
@@ -723,10 +713,10 @@
         // مثلا: /movies/latest?genre=Action
         // فعلاً فقط UI رو می‌زنیم
         if(id !== "all"){
-          // نمونه‌ی فیلتر سمت فرانت (اگر item.genres داشته باشه)
-          filterRailsByCategory(chip.textContent.trim());
+          // به جای فیلتر فرانت:
+          await loadRails(id); 
         } else {
-          await loadRails(); // ریست
+          await loadRails(null);
         }
       }, { once:true });
     }
@@ -751,7 +741,7 @@
       const poster = item.backdrop || item.backdrop_url || item.poster || item.poster_url || "";
       heroImg.src = poster;
       heroTitle.textContent = item.title || item.name || "—";
-      heroRate.textContent = (item.vote ?? item.vote ?? "—");
+      heroRate.textContent = (item.vote ?? "—");
       heroDesc.textContent = (item.overview ?? item.storyline ?? item.description ?? "").toString().trim() || "—";
 
       const g = item.genres || item.genre || [];
@@ -759,7 +749,8 @@
       heroTags.innerHTML = arr.slice(0,4).map(t => `<span class="tag">${t}</span>`).join("") || `<span class="tag">Action</span><span class="tag">Fantasy</span>`;
       hero.style.display = "block";
 
-      hero.onclick = ()=> openMovie(item.id);
+      hero.onclick = ()=> openMovie(item.code);
+
     }
 
     /*************************************************
@@ -843,7 +834,15 @@
           if(e.target.closest("[data-bookmark]")){
             const id = card.dataset.id;
             // نمونه: اضافه به واچ‌لیست
-            apiPost(API.endpoints.watchlistAdd, { id }).catch(()=>{});
+            if(e.target.closest("[data-bookmark]")){
+            const code = card.dataset.id;
+            const key="nc_watchlist";
+            const arr = JSON.parse(localStorage.getItem(key)||"[]");
+            if(!arr.includes(code)) arr.push(code);
+            localStorage.setItem(key, JSON.stringify(arr));
+            return;
+          }
+
             return;
           }
           openMovie(card.dataset.id);
@@ -922,7 +921,13 @@
      *************************************************/
     async function loadChips(){
       try{
-        const cats = await apiGet(API.endpoints.categories);
+        async function loadChips(){
+        renderChips([
+          {id:"movie", name:"فیلم"},
+          {id:"series", name:"سریال"},
+        ]);
+      }
+
         renderChips(cats || []);
       }catch(err){
         console.error(err);
@@ -936,11 +941,11 @@
       }
     }
 
-    async function loadRails(){
+    async function loadRails(type=null){
   try{
     const [topList, latestRes] = await Promise.all([
       apiGet(API.endpoints.top),
-      apiGet(API.endpoints.movies(1, 12, null)),
+      apiGet(API.endpoints.movies(1, 12, type)),
     ]);
 
     cachedTrending = topList || [];
@@ -955,8 +960,6 @@
     bindCardClicks();
   }catch(err){
     console.error(err);
-    latestRail.innerHTML = `<div style="color:rgba(255,255,255,.65);font-weight:800">خطا در دریافت جدیدترین‌ها</div>`;
-    trendRail.innerHTML  = `<div style="color:rgba(255,255,255,.65);font-weight:800">خطا در دریافت ترندها</div>`;
   }
 }
 
