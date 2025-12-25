@@ -1,283 +1,1237 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NightCut WebApp</title>
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: {
-                            bg: "#0B0C15",
-                            card: "#15161E",
-                            input: "#1E1F2B",
-                            primary: "#6C47FF",
-                            secondary: "#00C2FF",
-                        }
-                    },
-                    fontFamily: { sans: ['Inter', 'sans-serif'] }
-                }
-            }
-        }
-    </script>
-    
-    <style>
-        body { background-color: #0B0C15; color: white; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .glass-nav {
-            background: rgba(11, 12, 21, 0.95);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>NightCut MiniApp</title>
 
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    
-    <script src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.min.js"></script>
-    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Telegram WebApp -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --card:#12131a;
+      --card2:#161824;
+      --text:#ffffff;
+      --muted:#a6aab6;
+      --line: rgba(255,255,255,0.08);
+      --accent:#a855f7;     /* purple */
+      --accent2:#6d28d9;    /* deep purple */
+      --shadow: 0 18px 60px rgba(0,0,0,.55);
+      --radius: 22px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(900px 600px at 15% 10%, rgba(168,85,247,.18), transparent 55%),
+        radial-gradient(800px 500px at 85% 25%, rgba(109,40,217,.16), transparent 60%),
+        radial-gradient(700px 500px at 50% 95%, rgba(168,85,247,.10), transparent 55%),
+        linear-gradient(180deg, #07080b, #0b0c10);
+      overflow-x:hidden;
+    }
+
+    a{color:inherit; text-decoration:none}
+
+    /* App shell */
+    .app{
+      max-width: 430px;
+      margin: 0 auto;
+      min-height: 100vh;
+      padding: 14px 14px 88px;
+      position: relative;
+    }
+
+    /* Top bar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding: 8px 4px 12px;
+    }
+    .hello{
+      display:flex; align-items:center; gap:10px;
+    }
+    .avatar{
+      width:38px;height:38px;border-radius:50%;
+      background: linear-gradient(135deg, rgba(168,85,247,.9), rgba(109,40,217,.9));
+      box-shadow: 0 10px 30px rgba(168,85,247,.18);
+      display:grid; place-items:center;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .hello .meta{line-height:1.15}
+    .hello .meta .hi{font-size:12px; color:var(--muted)}
+    .hello .meta .name{font-size:15px; font-weight:700}
+    .actions{display:flex; align-items:center; gap:10px;}
+    .iconbtn{
+      width:38px;height:38px;border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      display:grid; place-items:center;
+      cursor:pointer;
+      box-shadow: 0 12px 34px rgba(0,0,0,.25);
+      user-select:none;
+    }
+    .iconbtn:active{transform:scale(.98)}
+    .bellDot{
+      width:8px;height:8px;border-radius:999px;background:var(--accent);
+      position:absolute; top:10px; right:10px;
+      box-shadow: 0 0 0 4px rgba(168,85,247,.18);
+    }
+    .rel{position:relative}
+
+    /* Hero carousel-ish */
+    .hero{
+      border-radius: var(--radius);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02)),
+        radial-gradient(700px 400px at 20% 20%, rgba(168,85,247,.20), transparent 60%),
+        radial-gradient(700px 400px at 80% 20%, rgba(109,40,217,.18), transparent 60%),
+        rgba(18,19,26,0.8);
+      border:1px solid var(--line);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      padding: 12px;
+    }
+    .heroRow{
+      display:flex; gap:12px; align-items:stretch;
+    }
+    .heroPoster{
+      width: 112px;
+      aspect-ratio: 2/3;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.06);
+      border:1px solid rgba(255,255,255,0.08);
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .heroPoster img{width:100%; height:100%; object-fit:cover; display:block}
+    .heroInfo{
+      flex:1;
+      display:flex; flex-direction:column; justify-content:space-between;
+      min-height: 168px;
+    }
+    .heroInfo .tag{
+      display:inline-flex; align-items:center; gap:8px;
+      font-size:12px; color:var(--muted);
+    }
+    .pill{
+      display:inline-flex; align-items:center; justify-content:center;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.04);
+      color: #d9c7ff;
+      font-weight:600;
+      font-size: 12px;
+    }
+    .heroTitle{
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: .2px;
+      margin: 8px 0 6px;
+      line-height: 1.15;
+    }
+    .heroSub{
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+      display:-webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+      margin-bottom: 10px;
+    }
+    .heroCtas{display:flex; align-items:center; gap:10px;}
+    .btn{
+      border:0;
+      cursor:pointer;
+      border-radius: 16px;
+      padding: 10px 12px;
+      font-weight: 800;
+      font-size: 13px;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 14px 40px rgba(168,85,247,.25);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,0.04);
+      border:1px solid rgba(255,255,255,0.10);
+      box-shadow: none;
+      font-weight: 700;
+      color: #e9e9ff;
+    }
+    .btn:active{transform:scale(.99)}
+
+    /* Sections */
+    .section{
+      margin-top: 14px;
+    }
+    .sectionHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 6px 4px 8px;
+    }
+    .sectionHead h3{
+      margin:0;
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing:.2px;
+    }
+    .seeAll{
+      font-size: 12px;
+      color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+    }
+
+    /* Categories */
+    .cats{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding: 0 2px 8px;
+      scrollbar-width:none;
+    }
+    .cats::-webkit-scrollbar{display:none}
+    .chip{
+      flex:0 0 auto;
+      padding: 8px 12px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+      color: #d9d9ef;
+      font-size: 12px;
+      font-weight: 700;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip.active{
+      background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(109,40,217,.95));
+      border-color: transparent;
+      color:white;
+    }
+
+    /* Horizontal cards */
+    .hscroll{
+      display:flex; gap:12px; overflow:auto; padding: 2px 2px 10px;
+      scrollbar-width:none;
+    }
+    .hscroll::-webkit-scrollbar{display:none}
+
+    .card{
+      flex:0 0 auto;
+      width: 138px;
+      border-radius: 18px;
+      background: rgba(18,19,26,0.70);
+      border:1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 14px 44px rgba(0,0,0,.28);
+      overflow:hidden;
+      cursor:pointer;
+      user-select:none;
+    }
+    .card .poster{
+      width:100%;
+      aspect-ratio: 2/3;
+      background: rgba(255,255,255,0.06);
+      overflow:hidden;
+    }
+    .card .poster img{width:100%; height:100%; object-fit:cover; display:block}
+    .card .body{padding: 10px 10px 12px}
+    .card .title{
+      font-size: 12.5px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin:0 0 6px;
+      display:-webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow:hidden;
+    }
+    .card .meta{
+      display:flex; align-items:center; justify-content:space-between;
+      font-size: 11px;
+      color: var(--muted);
+      gap:8px;
+    }
+    .star{
+      display:inline-flex; align-items:center; gap:5px;
+      font-weight: 800;
+      color:#facc15;
+    }
+
+    /* Search */
+    .searchWrap{
+      margin-top: 12px;
+      display:flex; gap:10px; align-items:center;
+      padding: 10px 12px;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+      box-shadow: 0 14px 44px rgba(0,0,0,.25);
+    }
+    .searchWrap input{
+      width:100%;
+      border:0; outline:none;
+      background:transparent;
+      color: var(--text);
+      font-size: 13px;
+    }
+    .searchWrap input::placeholder{color: rgba(166,170,182,.8)}
+    .kbd{
+      font-size:11px;color:var(--muted);
+      border:1px solid rgba(255,255,255,0.10);
+      padding:5px 8px;border-radius:10px;
+      background: rgba(255,255,255,0.03);
+    }
+
+    /* Bottom nav */
+    .bottomNav{
+      position: fixed;
+      left:50%;
+      transform: translateX(-50%);
+      bottom: 10px;
+      width: min(430px, calc(100% - 16px));
+      background: rgba(18,19,26,.70);
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 20px 60px rgba(0,0,0,.45);
+      border-radius: 24px;
+      padding: 10px 12px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      backdrop-filter: blur(10px);
+      z-index: 50;
+    }
+    .navItem{
+      width: 64px;
+      display:flex; flex-direction:column; align-items:center; gap:6px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      cursor:pointer;
+      user-select:none;
+    }
+    .navItem .dot{
+      width: 34px; height: 34px; border-radius: 14px;
+      display:grid; place-items:center;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .navItem.active{color:white}
+    .navItem.active .dot{
+      background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(109,40,217,.95));
+      border-color: transparent;
+      box-shadow: 0 16px 44px rgba(168,85,247,.22);
+    }
+
+    /* Floating action */
+    .fab{
+      width: 54px; height: 54px;
+      border-radius: 999px;
+      border: 0;
+      cursor:pointer;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 18px 56px rgba(168,85,247,.30);
+      display:grid; place-items:center;
+      position:absolute;
+      left:50%;
+      transform: translateX(-50%);
+      top: -22px;
+    }
+    .fab:active{transform: translateX(-50%) scale(.99)}
+
+    /* Details page */
+    .page{display:none}
+    .page.active{display:block}
+
+    .detailsHero{
+      position: relative;
+      border-radius: var(--radius);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,0.08);
+      background: rgba(18,19,26,.72);
+      box-shadow: var(--shadow);
+    }
+    .detailsHero .bg{
+      height: 220px;
+      background: rgba(255,255,255,0.05);
+      position: relative;
+      overflow:hidden;
+    }
+    .detailsHero .bg img{
+      width:100%; height:100%;
+      object-fit:cover; display:block;
+      filter: saturate(1.05) contrast(1.05);
+      transform: scale(1.02);
+    }
+    .detailsHero .bg:after{
+      content:"";
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(11,12,16,0.0), rgba(11,12,16,0.92));
+    }
+    .detailsHero .content{
+      padding: 12px 12px 14px;
+      margin-top: -58px;
+      position: relative;
+      display:flex;
+      gap:12px;
+      align-items:flex-end;
+    }
+    .detailsPoster{
+      width: 112px;
+      aspect-ratio: 2/3;
+      border-radius: 18px;
+      border:1px solid rgba(255,255,255,0.10);
+      overflow:hidden;
+      background: rgba(255,255,255,0.06);
+      flex:0 0 auto;
+      box-shadow: 0 18px 56px rgba(0,0,0,.35);
+    }
+    .detailsPoster img{width:100%; height:100%; object-fit:cover; display:block}
+    .detailsMeta{flex:1}
+    .detailsMeta h2{
+      margin:0;
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: .2px;
+      line-height: 1.15;
+    }
+    .detailsMeta .row{
+      margin-top: 8px;
+      display:flex; flex-wrap:wrap; gap:8px; align-items:center;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .detailsMeta .row .badge{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border:1px solid rgba(255,255,255,0.10);
+      background: rgba(255,255,255,0.03);
+      color:#eaeaff;
+    }
+
+    .storyline{
+      margin-top: 12px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,0.08);
+      background: rgba(18,19,26,.70);
+      box-shadow: 0 14px 44px rgba(0,0,0,.22);
+      padding: 12px;
+    }
+    .storyline .label{
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .storyline .text{
+      font-size: 12.5px;
+      color: #d9d9ef;
+      line-height: 1.5;
+    }
+
+    .tree{
+      margin-top: 12px;
+      border-radius: var(--radius);
+      border:1px solid rgba(255,255,255,0.08);
+      background: rgba(18,19,26,.70);
+      box-shadow: 0 14px 44px rgba(0,0,0,.22);
+      padding: 10px 10px 8px;
+    }
+    .treeHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding: 6px 4px 10px;
+    }
+    .treeHead .title{
+      font-size: 13px; font-weight: 900;
+    }
+    .treeHead .hint{
+      font-size: 11px; color: var(--muted);
+    }
+
+    .node{
+      border-top: 1px solid rgba(255,255,255,0.06);
+      padding: 10px 6px;
+    }
+    .node:first-child{border-top:0}
+    .nodeRow{
+      display:flex; align-items:center; justify-content:space-between;
+      gap:10px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nodeLeft{
+      display:flex; align-items:center; gap:10px;
+      min-width: 0;
+    }
+    .nodeIcon{
+      width: 36px; height: 36px;
+      border-radius: 14px;
+      display:grid; place-items:center;
+      background: rgba(255,255,255,0.03);
+      border:1px solid rgba(255,255,255,0.08);
+      flex:0 0 auto;
+    }
+    .nodeText{
+      font-size: 12.5px;
+      font-weight: 900;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      max-width: 260px;
+    }
+    .nodeRight{
+      display:flex; align-items:center; gap:8px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      flex:0 0 auto;
+    }
+    .nodeChildren{padding-left: 12px; margin-top: 8px}
+    .chev{opacity:.8}
+
+    .toast{
+      position: fixed;
+      left:50%;
+      transform: translateX(-50%);
+      bottom: 86px;
+      background: rgba(0,0,0,.75);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 18px 60px rgba(0,0,0,.55);
+      display:none;
+      z-index: 60;
+      max-width: min(430px, calc(100% - 24px));
+    }
+
+    /* Small helpers */
+    .muted{color:var(--muted)}
+    .spacer8{height:8px}
+    .hidden{display:none}
+    .skeleton{
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.10), rgba(255,255,255,0.06));
+      background-size: 200% 100%;
+      animation: sk 1.2s infinite linear;
+    }
+    @keyframes sk{0%{background-position:200% 0} 100%{background-position:-200% 0}}
+
+    /* Minimal icons */
+    .i{font-style:normal; font-weight:900}
+  </style>
 </head>
+
 <body>
+  <div class="app">
 
-    <div id="root"></div>
+    <!-- HOME -->
+    <section id="page-home" class="page active">
+      <div class="topbar">
+        <div class="hello">
+          <div class="avatar" id="avatar">N</div>
+          <div class="meta">
+            <div class="hi">Hello 👋</div>
+            <div class="name" id="tgName">NightCut</div>
+          </div>
+        </div>
 
-    <script type="text/babel">
-        const { useState, useEffect } = React;
-        const { HashRouter, Routes, Route, Link, useNavigate, useParams, NavLink, useLocation } = ReactRouterDOM;
+        <div class="actions">
+          <div class="iconbtn rel" id="btnNotif" title="Notifications">
+            <span class="bellDot" id="bellDot"></span>
+            <span class="i">🔔</span>
+          </div>
+          <div class="iconbtn" id="btnMenu" title="Menu">
+            <span class="i">≡</span>
+          </div>
+        </div>
+      </div>
 
-        // --- CONFIGURATION ---
-        const queryParams = new URLSearchParams(window.location.search);
-        // آدرس API خودت رو اینجا چک کن
-        const BASE_URL = queryParams.get('api') || 'http://localhost:8000'; 
-        const api = axios.create({ baseURL: BASE_URL });
+      <div class="searchWrap">
+        <span class="i">🔎</span>
+        <input id="searchInput" placeholder="Search movies & series..." autocomplete="off" />
+        <span class="kbd">Enter</span>
+      </div>
 
-        // --- ICONS (SVG Components) ---
-        const IconStar = () => <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>;
-        const IconHome = ({size=24, color="currentColor"}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
-        const IconSearch = ({size=24, color="currentColor"}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
-        const IconHeart = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>;
-        const IconUser = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
-        const IconCompass = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>;
-        const IconBack = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>;
-        const IconPlay = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
-        const IconDownload = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
-        const IconFolder = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>;
-        const IconFile = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>;
-        const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
-
-        // --- COMPONENTS ---
-
-        const MovieCard = ({ movie }) => (
-            <Link to={`/detail/${movie.code}`} className="flex-shrink-0 w-[140px] snap-start">
-                <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-2 bg-dark-card border border-white/5">
-                    <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover" loading="lazy" />
-                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md flex items-center gap-1">
-                        <IconStar />
-                        <span className="text-[10px] font-bold text-white">{movie.vote}</span>
-                    </div>
-                </div>
-                <h3 className="text-white font-medium text-sm truncate">{movie.title}</h3>
-                <p className="text-gray-400 text-[10px]">{movie.year.split('-')[0]} • {movie.type === 'movie' ? 'Movie' : 'Series'}</p>
-            </Link>
-        );
-
-        const BottomNav = () => (
-            <div className="fixed bottom-0 left-0 right-0 h-20 glass-nav z-50 px-6 pb-4 pt-2">
-                <div className="flex justify-between items-center h-full max-w-md mx-auto">
-                    <NavLink to="/" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconHome /></div></NavLink>
-                    <NavLink to="/explore" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconCompass /></div></NavLink>
-                    <div className="w-12 h-12 bg-gradient-to-tr from-dark-primary to-dark-secondary rounded-full flex items-center justify-center shadow-lg -mt-6 border-4 border-[#0B0C15]">
-                        <IconSearch color="white" />
-                    </div>
-                    <NavLink to="/watchlist" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconHeart /></div></NavLink>
-                    <NavLink to="/profile" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconUser /></div></NavLink>
-                </div>
+      <div class="section">
+        <div class="hero" id="hero">
+          <div class="heroRow">
+            <div class="heroPoster skeleton" id="heroPoster"></div>
+            <div class="heroInfo">
+              <div>
+                <div class="tag"><span class="pill" id="heroType">Loading</span> <span class="muted" id="heroYear">—</span></div>
+                <div class="heroTitle skeleton" style="height:20px; width:80%; border-radius:10px" id="heroTitleSk"></div>
+                <div class="heroSub skeleton" style="height:48px; border-radius:12px" id="heroSubSk"></div>
+              </div>
+              <div class="heroCtas">
+                <button class="btn" id="heroOpen">Open</button>
+                <button class="btn secondary" id="heroSave">+ Watchlist</button>
+              </div>
             </div>
-        );
+          </div>
+        </div>
+      </div>
 
-        const DownloadSheet = ({ tree, onClose, title }) => {
-            const [currentNode, setCurrentNode] = useState(tree);
-            const [history, setHistory] = useState([]);
-            const [headerTitle, setHeaderTitle] = useState("Select File");
+      <div class="section">
+        <div class="sectionHead">
+          <h3>Categories</h3>
+          <div class="seeAll" id="catsReset">Reset</div>
+        </div>
+        <div class="cats" id="cats">
+          <!-- chips -->
+        </div>
+      </div>
 
-            const handleNodeClick = (node) => {
-                if (node.media_type === 'folder') {
-                    setHistory([...history, { nodes: currentNode, title: headerTitle }]);
-                    setCurrentNode(node.children);
-                    setHeaderTitle(node.text);
-                } else {
-                    const tg = window.Telegram?.WebApp;
-                    if (tg) {
-                        tg.sendData(`GET:${node.id}`);
-                        tg.close();
-                    } else {
-                        alert(`Telegram Data: GET:${node.id} (Sent!)`);
-                    }
-                }
-            };
+      <div class="section">
+        <div class="sectionHead">
+          <h3>Latest</h3>
+          <div class="seeAll" id="latestMore">See All</div>
+        </div>
+        <div class="hscroll" id="latestRow">
+          <!-- cards -->
+        </div>
+      </div>
 
-            const handleBack = () => {
-                if (history.length === 0) return;
-                const prev = history[history.length - 1];
-                setCurrentNode(prev.nodes);
-                setHeaderTitle(prev.title);
-                setHistory(history.slice(0, -1));
-            };
+      <div class="section">
+        <div class="sectionHead">
+          <h3>Trending Now</h3>
+          <div class="seeAll" id="trendingMore">See All</div>
+        </div>
+        <div class="hscroll" id="trendingRow">
+          <!-- cards -->
+        </div>
+      </div>
+    </section>
 
-            return (
-                <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
-                    <div className="bg-[#15161E] w-full max-w-md rounded-t-3xl p-6 min-h-[50vh] max-h-[85vh] flex flex-col shadow-2xl border-t border-white/10">
-                        <div className="flex justify-between items-center mb-6">
-                            <div className="flex items-center gap-3">
-                                {history.length > 0 && <button onClick={handleBack} className="text-gray-400 text-sm">Back</button>}
-                                <h3 className="text-xl font-bold text-white truncate max-w-[200px]">{headerTitle}</h3>
-                            </div>
-                            <button onClick={onClose} className="bg-dark-input p-2 rounded-full"><IconX /></button>
-                        </div>
-                        <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
-                            {currentNode.map((node) => (
-                                <button key={node.id} onClick={() => handleNodeClick(node)} className="w-full flex items-center gap-4 p-4 bg-dark-bg/50 rounded-xl hover:bg-dark-bg border border-white/5 transition-all active:scale-95 text-left">
-                                    <div className={`p-3 rounded-full ${node.media_type === 'folder' ? 'bg-blue-500/10 text-blue-400' : 'bg-green-500/10 text-green-400'}`}>
-                                        {node.media_type === 'folder' ? <IconFolder /> : <IconFile />}
-                                    </div>
-                                    <div className="flex-1">
-                                        <p className="font-medium text-white">{node.text}</p>
-                                        {node.media_type !== 'folder' && <p className="text-xs text-gray-500">Tap to receive</p>}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+    <!-- DETAILS -->
+    <section id="page-details" class="page">
+      <div class="topbar">
+        <div class="actions" style="gap:10px">
+          <div class="iconbtn" id="backHome" title="Back">
+            <span class="i">←</span>
+          </div>
+          <div style="font-weight:900; font-size:14px">Details</div>
+        </div>
+        <div class="actions">
+          <div class="iconbtn" id="detailsSave" title="Watchlist">
+            <span class="i">☆</span>
+          </div>
+        </div>
+      </div>
 
-        // --- PAGES ---
+      <div class="detailsHero" id="detailsHero">
+        <div class="bg" id="detailsBg"></div>
+        <div class="content">
+          <div class="detailsPoster" id="detailsPoster"></div>
+          <div class="detailsMeta">
+            <h2 id="detailsTitle">Loading...</h2>
+            <div class="row">
+              <span class="badge" id="detailsType">—</span>
+              <span class="badge" id="detailsYear">—</span>
+              <span class="badge"><span class="star">★ <span id="detailsVote">0.0</span></span></span>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <span class="muted" id="detailsGenres">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
 
-        const HomePage = () => {
-            const [topMovies, setTopMovies] = useState([]);
-            const [latestMovies, setLatestMovies] = useState([]);
+      <div class="storyline">
+        <div class="label">Storyline</div>
+        <div class="text" id="detailsOverview">—</div>
+      </div>
 
-            useEffect(() => {
-                const tg = window.Telegram?.WebApp;
-                if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#0B0C15'); tg.setBackgroundColor('#0B0C15'); }
-                
-                // MOCK DATA for Demo (Because API might not be running locally for you)
-                // In real usage, uncomment axios below
-                /*
-                api.get('/api/top').then(res => setTopMovies(res.data));
-                api.get('/api/movies?page=1').then(res => setLatestMovies(res.data.items));
-                */
-               // DEMO DATA:
-               setTopMovies([
-                   {id:1, code:'test', title:'Oppenheimer', poster:'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', vote:8.1, year:'2023', type:'movie'},
-                   {id:2, code:'test', title:'Barbie', poster:'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg', vote:7.2, year:'2023', type:'movie'},
-               ]);
-               setLatestMovies([
-                   {id:3, code:'test', title:'Breaking Bad', poster:'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg', vote:9.5, year:'2008', type:'series'},
-                   {id:4, code:'test', title:'Inception', poster:'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKqJCZVnBNmBDXLsjC.jpg', vote:8.8, year:'2010', type:'movie'},
-               ]);
+      <div class="tree">
+        <div class="treeHead">
+          <div class="title">Files</div>
+          <div class="hint">Tap an item to download</div>
+        </div>
+        <div id="treeWrap"></div>
+      </div>
+    </section>
 
-            }, []);
+    <!-- WATCHLIST -->
+    <section id="page-watchlist" class="page">
+      <div class="topbar">
+        <div style="font-weight:900; font-size:14px">Watchlist</div>
+        <div class="actions">
+          <div class="iconbtn" id="clearWatchlist" title="Clear">
+            <span class="i">🗑</span>
+          </div>
+        </div>
+      </div>
 
-            return (
-                <div className="pb-24 pt-6 px-6">
-                    <div className="flex justify-between items-center mb-8">
-                        <div><p className="text-gray-400 text-xs mb-1">Welcome Back 👋</p><h1 className="text-2xl font-bold text-white">Guest User</h1></div>
-                    </div>
-                    
-                    <div className="mb-8">
-                        <h2 className="text-lg font-bold text-white mb-4">Trending Now</h2>
-                        <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x pb-4">
-                            {topMovies.map(m => <MovieCard key={m.id} movie={m} />)}
-                        </div>
-                    </div>
+      <div class="sectionHead" style="padding-top:0">
+        <h3>Your saved items</h3>
+        <div class="seeAll" id="watchHint">Local</div>
+      </div>
 
-                    <div>
-                        <h2 className="text-lg font-bold text-white mb-4">Latest</h2>
-                        <div className="grid grid-cols-3 gap-3">
-                            {latestMovies.map(m => <MovieCard key={m.id} movie={m} />)}
-                        </div>
-                    </div>
-                </div>
-            );
-        };
+      <div id="watchGrid" style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
+        <!-- cards -->
+      </div>
+      <div class="spacer8"></div>
+      <div class="muted" id="watchEmpty" style="display:none; font-size:13px; padding:10px 4px;">
+        Your watchlist is empty.
+      </div>
+    </section>
 
-        const DetailPage = () => {
-            const { code } = useParams();
-            const navigate = useNavigate();
-            const [showSheet, setShowSheet] = useState(false);
-            
-            // DEMO DATA
-            const content = {
-                title: "Oppenheimer",
-                poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
-                year: "2023",
-                vote: 8.1,
-                type: "movie",
-                genres: "Drama, History",
-                overview: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb."
-            };
-            
-            const tree = [
-                {id: 1, text: "1080p SoftSub", media_type: "url"},
-                {id: 2, text: "720p Dubbed", media_type: "url"},
-            ];
+    <div class="toast" id="toast"></div>
+  </div>
 
-            return (
-                <div className="pb-24 min-h-screen bg-dark-bg relative">
-                    <div className="absolute top-0 left-0 w-full h-[65vh] z-0">
-                        <img src={content.poster} className="w-full h-full object-cover opacity-50" />
-                        <div className="absolute inset-0 bg-gradient-to-b from-dark-bg/20 via-dark-bg/80 to-dark-bg" />
-                    </div>
-                    <div className="relative z-10 px-6 pt-6 flex justify-between">
-                        <button onClick={() => navigate(-1)} className="p-3 bg-white/10 backdrop-blur-md rounded-full"><IconBack /></button>
-                    </div>
-                    <div className="relative z-10 mt-[25vh] px-6 text-center">
-                        <div className="w-48 mx-auto rounded-2xl overflow-hidden shadow-2xl mb-6 border-2 border-white/10">
-                            <img src={content.poster} className="w-full" />
-                        </div>
-                        <h1 className="text-3xl font-bold text-white mb-2">{content.title}</h1>
-                        <div className="flex justify-center items-center gap-4 text-gray-400 text-xs mb-6">
-                            <span>{content.year}</span> <div className="w-1 h-1 bg-gray-600 rounded-full"></div> <span>IMDb {content.vote}</span>
-                        </div>
-                        <div className="flex gap-4 justify-center mb-8">
-                            <button className="flex-1 bg-white text-black py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2"><IconPlay /> Play</button>
-                            <button onClick={() => setShowSheet(true)} className="flex-1 bg-white/10 backdrop-blur-md text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/10"><IconDownload /> Download</button>
-                        </div>
-                        <div className="text-left"><h3 className="text-lg font-bold text-white mb-2">Storyline</h3><p className="text-gray-400 text-sm">{content.overview}</p></div>
-                    </div>
-                    {showSheet && <DownloadSheet tree={tree} title={content.title} onClose={() => setShowSheet(false)} />}
-                </div>
-            );
-        };
+  <!-- Bottom Nav -->
+  <nav class="bottomNav">
+    <div class="navItem active" data-tab="home" id="navHome">
+      <div class="dot"><span class="i">⌂</span></div>
+      <div>Home</div>
+    </div>
 
-        const App = () => {
-            return (
-                <HashRouter>
-                    <div className="max-w-md mx-auto min-h-screen bg-dark-bg text-white shadow-2xl relative overflow-hidden font-sans">
-                        <Routes>
-                            <Route path="/" element={<HomePage />} />
-                            <Route path="/detail/:code" element={<DetailPage />} />
-                            <Route path="/explore" element={<div className='p-10 text-center'>Explore Page (Demo)</div>} />
-                            <Route path="/watchlist" element={<div className='p-10 text-center'>Watchlist (Demo)</div>} />
-                            <Route path="/profile" element={<div className='p-10 text-center'>Profile (Demo)</div>} />
-                        </Routes>
-                        <BottomNav />
-                    </div>
-                </HashRouter>
-            );
-        };
+    <div class="navItem" data-tab="categories" id="navCategories">
+      <div class="dot"><span class="i">☰</span></div>
+      <div>Categories</div>
+    </div>
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    <button class="fab" id="fabSearch" title="Search">
+      <span class="i">🔎</span>
+    </button>
+
+    <div class="navItem" data-tab="watchlist" id="navWatch">
+      <div class="dot"><span class="i">☆</span></div>
+      <div>Watchlist</div>
+    </div>
+
+    <div class="navItem" data-tab="profile" id="navProfile">
+      <div class="dot"><span class="i">☺</span></div>
+      <div>Profile</div>
+    </div>
+  </nav>
+
+<script>
+/* =========================================================
+   NightCut MiniApp (Telegram WebApp)
+   - Connects to your FastAPI:
+       /api/movies
+       /api/top
+       /api/content/{code}
+       /api/content/{code}/tree
+   - Sends: Telegram.WebApp.sendData("GET:<var_id>")
+   ========================================================= */
+
+(function(){
+  const tg = window.Telegram?.WebApp;
+  if (tg) {
+    tg.ready();
+    tg.expand();
+    // optional: match Telegram theme a bit
+    tg.setHeaderColor?.("#0b0c10");
+    tg.setBackgroundColor?.("#0b0c10");
+  }
+
+  // --- Read API base from ?api=...
+  const params = new URLSearchParams(location.search);
+  const API_BASE = (params.get("api") || "").replace(/\/+$/, "");
+  const api = (path) => (API_BASE ? (API_BASE + path) : path);
+
+  // --- UI refs
+  const pages = {
+    home: document.getElementById("page-home"),
+    details: document.getElementById("page-details"),
+    watchlist: document.getElementById("page-watchlist"),
+  };
+
+  const navHome = document.getElementById("navHome");
+  const navWatch = document.getElementById("navWatch");
+  const navCats = document.getElementById("navCategories");
+  const navProfile = document.getElementById("navProfile");
+  const fabSearch = document.getElementById("fabSearch");
+
+  const tgName = document.getElementById("tgName");
+  const avatar = document.getElementById("avatar");
+  const bellDot = document.getElementById("bellDot");
+
+  const heroPoster = document.getElementById("heroPoster");
+  const heroType = document.getElementById("heroType");
+  const heroYear = document.getElementById("heroYear");
+  const heroOpen = document.getElementById("heroOpen");
+  const heroSave = document.getElementById("heroSave");
+  const heroTitleSk = document.getElementById("heroTitleSk");
+  const heroSubSk = document.getElementById("heroSubSk");
+
+  const searchInput = document.getElementById("searchInput");
+
+  const catsWrap = document.getElementById("cats");
+  const catsReset = document.getElementById("catsReset");
+
+  const latestRow = document.getElementById("latestRow");
+  const trendingRow = document.getElementById("trendingRow");
+  const latestMore = document.getElementById("latestMore");
+  const trendingMore = document.getElementById("trendingMore");
+
+  const backHome = document.getElementById("backHome");
+  const detailsSave = document.getElementById("detailsSave");
+  const detailsBg = document.getElementById("detailsBg");
+  const detailsPoster = document.getElementById("detailsPoster");
+  const detailsTitle = document.getElementById("detailsTitle");
+  const detailsType = document.getElementById("detailsType");
+  const detailsYear = document.getElementById("detailsYear");
+  const detailsVote = document.getElementById("detailsVote");
+  const detailsGenres = document.getElementById("detailsGenres");
+  const detailsOverview = document.getElementById("detailsOverview");
+  const treeWrap = document.getElementById("treeWrap");
+
+  const watchGrid = document.getElementById("watchGrid");
+  const watchEmpty = document.getElementById("watchEmpty");
+  const clearWatchlist = document.getElementById("clearWatchlist");
+
+  const toast = document.getElementById("toast");
+
+  // --- State
+  let currentCategory = "All";
+  let heroItem = null;
+  let latestItems = [];
+  let trendingItems = [];
+  let currentDetails = null;
+
+  const CATEGORIES = ["All", "Action", "Comedy", "Drama", "Romance", "Fantasy", "Horror", "Animation"];
+
+  // --- Helpers
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.style.display = "block";
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toast.style.display="none", 2200);
+  }
+
+  function setActiveTab(tab){
+    document.querySelectorAll(".navItem").forEach(n=>n.classList.remove("active"));
+    if (tab === "home") navHome.classList.add("active");
+    if (tab === "watchlist") navWatch.classList.add("active");
+    if (tab === "categories") navCats.classList.add("active");
+    if (tab === "profile") navProfile.classList.add("active");
+  }
+
+  function openPage(name){
+    Object.values(pages).forEach(p=>p.classList.remove("active"));
+    pages[name].classList.add("active");
+    if (name === "home") setActiveTab("home");
+    if (name === "watchlist") setActiveTab("watchlist");
+  }
+
+  function escapeHtml(s){
+    return String(s||"").replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+  }
+
+  function cardTemplate(item){
+    const title = item?.title || "Unknown";
+    const poster = item?.poster || "";
+    const vote = (item?.vote ?? 0).toFixed(1);
+    const year = item?.year || "";
+    return `
+      <div class="card" data-code="${escapeHtml(item.code)}">
+        <div class="poster">
+          <img src="${escapeHtml(poster)}" alt="${escapeHtml(title)}" loading="lazy" />
+        </div>
+        <div class="body">
+          <p class="title">${escapeHtml(title)}</p>
+          <div class="meta">
+            <span>${escapeHtml(year)}</span>
+            <span class="star">★ ${escapeHtml(vote)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function isMatchCategory(item, cat){
+    if (!cat || cat === "All") return true;
+    const g = (item?.genres || "").toLowerCase();
+    return g.includes(String(cat).toLowerCase());
+  }
+
+  function getWatchlist(){
+    try { return JSON.parse(localStorage.getItem("nc_watchlist") || "[]"); }
+    catch { return []; }
+  }
+  function setWatchlist(arr){
+    localStorage.setItem("nc_watchlist", JSON.stringify(arr));
+  }
+  function isSaved(code){
+    return getWatchlist().some(x => x.code === code);
+  }
+  function toggleSave(item){
+    const list = getWatchlist();
+    const idx = list.findIndex(x => x.code === item.code);
+    if (idx >= 0){
+      list.splice(idx,1);
+      setWatchlist(list);
+      showToast("Removed from Watchlist");
+      return false;
+    } else {
+      list.unshift(item);
+      setWatchlist(list);
+      showToast("Added to Watchlist");
+      return true;
+    }
+  }
+
+  async function jget(url){
+    const r = await fetch(url, { cache: "no-store" });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return await r.json();
+  }
+
+  // --- Render categories
+  function renderCats(){
+    catsWrap.innerHTML = CATEGORIES.map(c => `
+      <div class="chip ${c===currentCategory ? "active":""}" data-cat="${escapeHtml(c)}">${escapeHtml(c)}</div>
+    `).join("");
+  }
+
+  // --- Render lists
+  function renderRow(el, items){
+    const filtered = items.filter(it => isMatchCategory(it, currentCategory));
+    if (!filtered.length){
+      el.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">No items.</div>`;
+      return;
+    }
+    el.innerHTML = filtered.slice(0, 12).map(cardTemplate).join("");
+    el.querySelectorAll(".card").forEach(c=>{
+      c.addEventListener("click", ()=>{
+        const code = c.getAttribute("data-code");
+        openDetails(code);
+      });
+    });
+  }
+
+  function setHero(item){
+    heroItem = item;
+    heroPoster.classList.remove("skeleton");
+    heroPoster.innerHTML = `<img src="${escapeHtml(item.poster)}" alt="${escapeHtml(item.title)}" />`;
+
+    heroType.textContent = item.type === "series" ? "TV" : "MOVIE";
+    heroYear.textContent = item.year || "—";
+
+    // replace skeleton title/sub
+    heroTitleSk.classList.remove("skeleton");
+    heroSubSk.classList.remove("skeleton");
+    heroTitleSk.style.height = "auto";
+    heroSubSk.style.height = "auto";
+    heroTitleSk.style.width = "auto";
+    heroTitleSk.style.borderRadius = "0";
+    heroSubSk.style.borderRadius = "0";
+
+    heroTitleSk.className = "heroTitle";
+    heroSubSk.className = "heroSub";
+    heroTitleSk.textContent = item.title || "—";
+    heroSubSk.textContent = item.overview || "No description available.";
+
+    heroOpen.onclick = ()=> openDetails(item.code);
+    heroSave.onclick = ()=> {
+      const saved = toggleSave(item);
+      heroSave.textContent = saved ? "✓ Watchlist" : "+ Watchlist";
+    };
+    heroSave.textContent = isSaved(item.code) ? "✓ Watchlist" : "+ Watchlist";
+  }
+
+  // --- Details
+  async function openDetails(code){
+    openPage("details");
+    setActiveTab(""); // keep nav clean on details
+
+    // loading placeholders
+    detailsBg.innerHTML = `<div class="skeleton" style="width:100%;height:100%"></div>`;
+    detailsPoster.innerHTML = `<div class="skeleton" style="width:100%;height:100%"></div>`;
+    detailsTitle.textContent = "Loading...";
+    detailsType.textContent = "—";
+    detailsYear.textContent = "—";
+    detailsVote.textContent = "0.0";
+    detailsGenres.textContent = "—";
+    detailsOverview.textContent = "—";
+    treeWrap.innerHTML = `<div class="muted" style="padding:10px 6px; font-size:12px;">Loading files...</div>`;
+
+    try{
+      const content = await jget(api(`/api/content/${encodeURIComponent(code)}`));
+      currentDetails = content;
+
+      detailsBg.innerHTML = `<img src="${escapeHtml(content.poster)}" alt="" />`;
+      detailsPoster.innerHTML = `<img src="${escapeHtml(content.poster)}" alt="${escapeHtml(content.title)}" />`;
+
+      detailsTitle.textContent = content.title || "—";
+      detailsType.textContent = content.type === "series" ? "TV" : "MOVIE";
+      detailsYear.textContent = content.year || "—";
+      detailsVote.textContent = (content.vote ?? 0).toFixed(1);
+      detailsGenres.textContent = content.genres || "—";
+      detailsOverview.textContent = content.overview || "No storyline available.";
+
+      detailsSave.innerHTML = `<span class="i">${isSaved(content.code) ? "★" : "☆"}</span>`;
+      detailsSave.onclick = ()=>{
+        const saved = toggleSave(content);
+        detailsSave.innerHTML = `<span class="i">${saved ? "★" : "☆"}</span>`;
+        renderWatchlist();
+      };
+
+      // Tree
+      const treeData = await jget(api(`/api/content/${encodeURIComponent(code)}/tree`));
+      renderTree(treeData.tree || []);
+    }catch(e){
+      showToast("Failed to load. Check API URL.");
+      treeWrap.innerHTML = `<div class="muted" style="padding:10px 6px; font-size:12px;">No files.</div>`;
+    }
+  }
+
+  function renderTree(nodes){
+    treeWrap.innerHTML = "";
+    if (!nodes.length){
+      treeWrap.innerHTML = `<div class="muted" style="padding:10px 6px; font-size:12px;">No files found.</div>`;
+      return;
+    }
+    nodes.forEach(n => treeWrap.appendChild(renderNode(n)));
+  }
+
+  function renderNode(node){
+    const wrap = document.createElement("div");
+    wrap.className = "node";
+
+    const isFolder = node.media_type === "folder";
+    const icon = isFolder ? "📁" : "⬇️";
+    const right = isFolder ? "Open" : "Get";
+    const hasChildren = isFolder && node.children && node.children.length;
+
+    wrap.innerHTML = `
+      <div class="nodeRow">
+        <div class="nodeLeft">
+          <div class="nodeIcon"><span class="i">${icon}</span></div>
+          <div class="nodeText">${escapeHtml(node.text || "—")}</div>
+        </div>
+        <div class="nodeRight">
+          <span>${right}</span>
+          <span class="chev">${isFolder ? "›" : ""}</span>
+        </div>
+      </div>
+      <div class="nodeChildren ${hasChildren ? "hidden" : "hidden"}"></div>
+    `;
+
+    const row = wrap.querySelector(".nodeRow");
+    const childrenEl = wrap.querySelector(".nodeChildren");
+
+    if (isFolder){
+      // build children
+      if (hasChildren){
+        childrenEl.classList.add("hidden");
+        node.children.forEach(ch => childrenEl.appendChild(renderNode(ch)));
+      } else {
+        childrenEl.innerHTML = `<div class="muted" style="font-size:12px; padding:6px 0 0 6px;">Empty folder</div>`;
+      }
+
+      row.addEventListener("click", ()=>{
+        childrenEl.classList.toggle("hidden");
+      });
+    } else {
+      // leaf: send to bot
+      row.addEventListener("click", ()=>{
+        if (tg && tg.sendData){
+          tg.sendData(`GET:${node.id}`);
+          showToast("Sent to bot ✅");
+          // optional: close mini app after sending
+          setTimeout(()=> tg.close?.(), 350);
+        } else {
+          showToast(`GET:${node.id}`);
+        }
+      });
+    }
+
+    return wrap;
+  }
+
+  // --- Watchlist page
+  function renderWatchlist(){
+    const list = getWatchlist();
+    watchGrid.innerHTML = "";
+    watchEmpty.style.display = list.length ? "none" : "block";
+    if (!list.length) return;
+
+    list.slice(0, 50).forEach(item=>{
+      const div = document.createElement("div");
+      div.innerHTML = cardTemplate(item);
+      const card = div.firstElementChild;
+      card.addEventListener("click", ()=> openDetails(item.code));
+      watchGrid.appendChild(card);
+    });
+  }
+
+  // --- Search
+  let searchTimer = null;
+  async function runSearch(q){
+    const query = (q||"").trim();
+    if (!query){
+      renderRow(latestRow, latestItems);
+      renderRow(trendingRow, trendingItems);
+      return;
+    }
+
+    latestRow.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">Searching...</div>`;
+    trendingRow.innerHTML = ``;
+
+    try{
+      const data = await jget(api(`/api/movies?page=1&limit=24&q=${encodeURIComponent(query)}`));
+      const items = (data.items || []);
+      // show in latest row
+      latestRow.innerHTML = items.map(cardTemplate).join("");
+      latestRow.querySelectorAll(".card").forEach(c=>{
+        c.addEventListener("click", ()=>{
+          const code = c.getAttribute("data-code");
+          openDetails(code);
+        });
+      });
+      // hide trending on search
+      trendingRow.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;"> </div>`;
+    }catch(e){
+      latestRow.innerHTML = `<div class="muted" style="padding:6px 4px; font-size:12px;">Search failed.</div>`;
+    }
+  }
+
+  // --- Initial load
+  async function init(){
+    // Telegram user
+    const user = tg?.initDataUnsafe?.user;
+    if (user){
+      const name = [user.first_name, user.last_name].filter(Boolean).join(" ");
+      tgName.textContent = name || "NightCut";
+      avatar.textContent = (user.first_name?.[0] || "N").toUpperCase();
+    } else {
+      bellDot.style.display = "none";
+    }
+
+    renderCats();
+
+    // skeleton cards
+    latestRow.innerHTML = Array.from({length:6}).map(()=>`
+      <div class="card">
+        <div class="poster skeleton"></div>
+        <div class="body">
+          <div class="skeleton" style="height:12px;border-radius:8px;margin-bottom:8px"></div>
+          <div class="skeleton" style="height:10px;border-radius:8px;width:70%"></div>
+        </div>
+      </div>
+    `).join("");
+
+    trendingRow.innerHTML = latestRow.innerHTML;
+
+    // Fetch data
+    if (!API_BASE){
+      showToast("Missing ?api=YOUR_API_URL");
+      return;
+    }
+
+    try{
+      // Trending = top by clicks
+      const top = await jget(api(`/api/top?limit=12`));
+      trendingItems = Array.isArray(top) ? top : [];
+
+      // Latest = newest by id desc
+      const movies = await jget(api(`/api/movies?page=1&limit=18`));
+      latestItems = movies.items || [];
+
+      // Hero pick: prefer top[0], else latest[0]
+      const pick = trendingItems[0] || latestItems[0];
+      if (pick) setHero(pick);
+
+      renderRow(latestRow, latestItems);
+      renderRow(trendingRow, trendingItems);
+    }catch(e){
+      showToast("API error. Check CORS / URL.");
+    }
+  }
+
+  // --- Events
+  catsWrap.addEventListener("click", (e)=>{
+    const chip = e.target.closest(".chip");
+    if (!chip) return;
+    currentCategory = chip.getAttribute("data-cat") || "All";
+    renderCats();
+    renderRow(latestRow, latestItems);
+    renderRow(trendingRow, trendingItems);
+  });
+
+  catsReset.addEventListener("click", ()=>{
+    currentCategory = "All";
+    renderCats();
+    renderRow(latestRow, latestItems);
+    renderRow(trendingRow, trendingItems);
+  });
+
+  latestMore.addEventListener("click", ()=>{
+    showToast("Tip: Use search to browse more");
+    searchInput.focus();
+  });
+  trendingMore.addEventListener("click", ()=>{
+    showToast("Tip: Use search to browse more");
+    searchInput.focus();
+  });
+
+  backHome.addEventListener("click", ()=>{
+    openPage("home");
+    renderRow(latestRow, latestItems);
+    renderRow(trendingRow, trendingItems);
+  });
+
+  clearWatchlist.addEventListener("click", ()=>{
+    setWatchlist([]);
+    renderWatchlist();
+    showToast("Cleared");
+  });
+
+  // bottom nav
+  navHome.addEventListener("click", ()=> openPage("home"));
+  navWatch.addEventListener("click", ()=> { openPage("watchlist"); renderWatchlist(); });
+  navCats.addEventListener("click", ()=>{
+    openPage("home");
+    document.getElementById("catsReset").scrollIntoView({behavior:"smooth", block:"center"});
+  });
+  navProfile.addEventListener("click", ()=> showToast("Profile (optional)"));
+
+  fabSearch.addEventListener("click", ()=>{
+    openPage("home");
+    searchInput.focus();
+  });
+
+  // search input
+  searchInput.addEventListener("keydown", (e)=>{
+    if (e.key === "Enter"){
+      runSearch(searchInput.value);
+    }
+  });
+  searchInput.addEventListener("input", ()=>{
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(()=> runSearch(searchInput.value), 350);
+  });
+
+  // menu / notif
+  document.getElementById("btnMenu").addEventListener("click", ()=>{
+    showToast("Menu (optional)");
+  });
+  document.getElementById("btnNotif").addEventListener("click", ()=>{
+    showToast("Notifications (optional)");
+  });
+
+  // Watchlist page initial render
+  renderWatchlist();
+
+  init();
+})();
+</script>
 </body>
 </html>
