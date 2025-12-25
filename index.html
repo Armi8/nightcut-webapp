@@ -1,814 +1,355 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>NightCut</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie App</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #ffffff;
+            --accent-color: #8a2be2; /* Purple */
+            --secondary-text: #aaaaaa;
+            --card-bg: #1e1e1e;
+        }
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        body {
+            margin: 0;
+            font-family: 'Vazirmatn', sans-serif; /* استفاده از فونت فارسی مناسب */
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center; /* برای نمایش سه گوشی کنار هم */
+            gap: 20px;
+            padding: 20px;
+        }
 
-  <style>
-    :root{
-      --bg:#0f1014;
-      --card:#15161a;
-      --card2:#1a1b1f;
-      --text:#fff;
-      --muted:#8e929b;
-      --line: rgba(255,255,255,0.06);
-      --accent:#e11d48;
-      --shadow: 0 10px 30px rgba(0,0,0,0.55);
-      --radius: 18px;
-    }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;outline:none}
-    body{
-      margin:0;
-      font-family:'Vazirmatn',sans-serif;
-      background:var(--bg);
-      color:var(--text);
-      overflow-x:hidden;
-      padding-bottom: 86px;
-    }
-    a{color:inherit;text-decoration:none}
+        .app-container {
+            width: 375px; /* عرض تقریبی یک گوشی */
+            height: 812px; /* ارتفاع تقریبی یک گوشی */
+            background-color: var(--bg-color);
+            border-radius: 30px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
 
-    .header{
-      display:flex;justify-content:space-between;align-items:center;
-      padding:20px 20px 10px;
-      position:sticky;top:0;z-index:10;
-      background:linear-gradient(to bottom, rgba(15,16,20,0.96) 65%, rgba(15,16,20,0.0));
-      backdrop-filter: blur(10px);
-    }
-    .user-profile{display:flex;align-items:center;gap:12px}
-    .avatar{width:50px;height:50px;border-radius:50%;object-fit:cover;border:2px solid #222;background:#222}
-    .welcome-text{font-size:11px;color:var(--muted)}
-    .username-text{font-size:16px;font-weight:800}
-    .header-actions{display:flex;gap:10px}
-    .icon-btn{
-      width:40px;height:40px;background:var(--card2);
-      border-radius:14px;display:flex;align-items:center;justify-content:center;
-      font-size:20px;cursor:pointer;color:white;border:1px solid var(--line);
-    }
+        /* --- Header & Navigation --- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+        }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .avatar { width: 40px; height: 40px; border-radius: 50%; }
+        .welcome-text { font-size: 14px; color: var(--secondary-text); }
+        .username-text { font-weight: bold; }
+        .header-actions .icon-btn { margin-left: 10px; }
+        .icon-btn { font-size: 24px; cursor: pointer; }
 
-    .tabs{display:flex;gap:8px;padding: 0 20px 10px;}
-    .tab{
-      flex:1;background: rgba(255,255,255,0.05);border:1px solid var(--line);
-      border-radius: 14px;padding:10px 12px;text-align:center;font-size:12px;color: var(--muted);
-      cursor:pointer;user-select:none;
-    }
-    .tab.active{background: rgba(225,29,72,0.16);border-color: rgba(225,29,72,0.25);color:#fff;font-weight:800;}
+        .bottom-nav {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background: linear-gradient(to top, rgba(138, 43, 226, 0.3), transparent); /* افکت نورانی بنفش */
+            display: flex;
+            justify-content: space-around;
+            padding: 15px 0;
+            border-radius: 20px 20px 0 0;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--secondary-text);
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .nav-item i { font-size: 24px; margin-bottom: 5px; }
+        .nav-item.active { color: var(--text-color); }
+        .nav-search-btn {
+            background-color: var(--accent-color);
+            width: 60px; height: 60px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            margin-top: -30px;
+            box-shadow: 0 4px 10px rgba(138, 43, 226, 0.5);
+        }
 
-    .section-header{
-      display:flex;justify-content:space-between;align-items:flex-end;
-      padding:0 20px;margin:14px 0 12px;
-    }
-    .section-title{font-size:20px;font-weight:800}
-    .view-all{font-size:12px;color:var(--muted)}
+        /* --- Common Components --- */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+        }
+        .section-title { font-size: 18px; font-weight: bold; }
+        .see-all { color: var(--accent-color); text-decoration: none; font-size: 14px; }
+        .horizontal-scroll {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding: 10px 20px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .horizontal-scroll::-webkit-scrollbar { display: none; /* Chrome, Safari, Opera */ }
 
-    .scroll-container{display:flex;gap:18px;overflow-x:auto;padding:0 20px 26px;scroll-snap-type:x mandatory;}
-    .scroll-container::-webkit-scrollbar{display:none}
-    .movie-card-large{flex:0 0 240px;position:relative;scroll-snap-align:center}
-    .poster-container{
-      width:100%;aspect-ratio:2/3;border-radius:24px;overflow:hidden;position:relative;
-      box-shadow:var(--shadow);border:1px solid var(--line);
-    }
-    .poster-img{width:100%;height:100%;object-fit:cover}
-    .poster-overlay{position:absolute;inset:0;background:linear-gradient(to top, rgba(0,0,0,0.95) 12%, transparent 60%);}
-    .card-info{position:absolute;bottom:14px;left:14px;right:14px;z-index:2;}
-    .movie-title{font-size:18px;font-weight:800;margin-bottom:6px;text-shadow:0 2px 4px #000}
-    .rating-row{display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:12px;font-weight:800}
-    .star{color:#f1c40f}
-    .tags{display:flex;gap:6px;flex-wrap:wrap}
-    .tag{padding:4px 10px;border-radius:10px;font-size:10px;font-weight:800;border:1px solid rgba(255,255,255,0.08);background: rgba(255,255,255,0.06);}
+        /* --- Home Page --- */
+        .categories .category-btn {
+            padding: 8px 16px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            color: var(--secondary-text);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        .categories .category-btn.active {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+        .movie-card { width: 120px; flex-shrink: 0; }
+        .movie-poster { width: 100%; height: 180px; border-radius: 15px; object-fit: cover; }
+        .movie-title { font-size: 14px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .main-banner-scroll .movie-poster { height: 220px; }
 
-    .vertical-list{padding:0 20px;display:flex;flex-direction:column;gap:12px;}
-    .movie-card-small{
-      display:flex;gap:14px;align-items:center;background:var(--card);
-      padding:10px;border-radius:18px;border:1px solid var(--line);cursor:pointer;
-    }
-    .small-poster{width:72px;height:72px;border-radius:14px;object-fit:cover}
-    .small-info{flex:1;min-width:0}
-    .small-title{font-size:14px;font-weight:800;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .small-meta{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
-    .chip{display:inline-flex;gap:6px;align-items:center;padding:4px 8px;border-radius:999px;background: rgba(255,255,255,0.06);border:1px solid var(--line);}
-    .play-btn-small{
-      width:38px;height:38px;background:rgba(255,255,255,0.06);
-      border:1px solid var(--line);border-radius:50%;
-      display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:18px;
-    }
+        /* --- Details Page --- */
+        .details-page .header { position: absolute; width: 100%; z-index: 10; }
+        .details-cover {
+            width: 100%; height: 50%; position: relative;
+        }
+        .details-cover img { width: 100%; height: 100%; object-fit: cover; border-radius: 0 0 30px 30px; }
+        .imax-logo { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 120px; }
+        .movie-info-container { padding: 20px; margin-top: -40px; background-color: var(--bg-color); border-radius: 30px 30px 0 0; position: relative; }
+        .genres { display: flex; gap: 10px; margin-bottom: 15px; }
+        .genre-tag { padding: 5px 12px; background-color: var(--card-bg); border-radius: 15px; font-size: 12px; }
+        .movie-title-large { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
+        .meta-info { display: flex; justify-content: space-between; align-items: center; color: var(--secondary-text); font-size: 14px; margin-bottom: 20px; }
+        .imdb-rating { display: flex; align-items: center; gap: 5px; background-color: #f5c518; color: #000; padding: 4px 8px; border-radius: 5px; font-weight: bold; }
+        .storyline { color: var(--secondary-text); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
+        .cast-list .cast-card { display: flex; align-items: center; gap: 10px; background-color: var(--card-bg); padding: 10px; border-radius: 15px; width: 160px; flex-shrink: 0; }
+        .cast-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        .cast-info div { font-size: 12px; }
 
-    .btn{
-      width:100%;background:rgba(225,29,72,0.14);
-      border:1px solid rgba(225,29,72,0.25);color:#fff;border-radius:16px;
-      padding:12px 14px;font-weight:900;cursor:pointer;
-    }
-    .btn:disabled{opacity:.6;cursor:not-allowed}
-    .load-more-wrap{padding: 14px 20px 30px}
-
-    .skeleton{background:#222;animation:pulse 1.35s infinite;border-radius:inherit}
-    @keyframes pulse{0%{opacity:.5}50%{opacity:1}100%{opacity:.5}}
-
-    /* DETAIL VIEW */
-    .page{display:none}
-    .page.active{display:block}
-
-    .detail-hero{
-      position:relative;
-      padding: 0 18px 14px;
-    }
-    .detail-cover{
-      width:100%;
-      height: 280px;
-      border-radius: 26px;
-      overflow:hidden;
-      position:relative;
-      border:1px solid var(--line);
-      box-shadow: var(--shadow);
-      margin-top: 8px;
-    }
-    .detail-cover img{width:100%;height:100%;object-fit:cover;filter:saturate(1.05)}
-    .detail-cover::after{
-      content:"";
-      position:absolute;inset:0;
-      background: linear-gradient(to top, rgba(15,16,20,0.96) 12%, rgba(15,16,20,0.15) 65%, rgba(15,16,20,0.05));
-    }
-    .detail-topbar{
-      display:flex;justify-content:space-between;align-items:center;
-      padding: 14px 18px 6px;
-    }
-    .back-btn{
-      width:42px;height:42px;border-radius:16px;
-      background:rgba(255,255,255,0.06);border:1px solid var(--line);
-      display:flex;align-items:center;justify-content:center;cursor:pointer;
-    }
-    .detail-title{
-      font-size:18px;font-weight:900;margin:12px 0 6px;
-      padding: 0 6px;
-    }
-    .detail-meta{
-      padding: 0 6px;
-      display:flex;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:12px;
-      margin-bottom: 10px;
-    }
-    .detail-overview{
-      padding: 0 6px;
-      color:#d7d7d7;
-      font-size:13px;
-      line-height: 1.85;
-      margin-bottom: 12px;
-    }
-
-    .tree-wrap{
-      padding: 0 18px 22px;
-    }
-    .tree-title{
-      display:flex;align-items:center;justify-content:space-between;
-      margin: 6px 0 10px;
-    }
-    .tree-title h3{margin:0;font-size:16px}
-    .tree-box{
-      background: var(--card);
-      border:1px solid var(--line);
-      border-radius: 20px;
-      padding: 10px;
-    }
-    .node{
-      display:flex;align-items:center;justify-content:space-between;
-      padding: 10px 10px;
-      border-radius: 16px;
-      cursor:pointer;
-    }
-    .node:hover{background: rgba(255,255,255,0.04)}
-    .node + .node{margin-top: 6px}
-    .node-left{display:flex;align-items:center;gap:10px;min-width:0}
-    .node-left i{font-size:18px;color: #cfcfcf}
-    .node-text{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .node-right{color:var(--muted);font-size:12px}
-
-    .bottom-nav{
-      position:fixed;left:0;right:0;bottom:0;
-      background:rgba(15,16,20,0.92);border-top:1px solid var(--line);
-      backdrop-filter: blur(10px);
-      padding: 10px 14px 18px;
-      display:flex;gap:10px;justify-content:space-between;z-index:20;
-    }
-        /* SEARCH UI (RTL-friendly) */
-    .search-wrap{
-    display:none;
-    width:100%;
-    padding: 10px 20px 14px;
-    }
-    .search-wrap.show{ display:block; }
-
-    .search-box{
-    position:relative;
-    }
-    .search-box input{
-    width:100%;
-    padding: 14px 44px 14px 44px; /* راست: آیکون، چپ: دکمه پاک کردن */
-    border-radius:16px;
-    border:1px solid var(--line);
-    background:var(--card);
-    color:#fff;
-    font-family:inherit;
-    }
-    .search-ico{
-    position:absolute;
-    right:14px;
-    top:50%;
-    transform:translateY(-50%);
-    color:var(--muted);
-    font-size:18px;
-    }
-    .clear-btn{
-    position:absolute;
-    left:10px;
-    top:50%;
-    transform:translateY(-50%);
-    width:34px;
-    height:34px;
-    border-radius:12px;
-    border:1px solid var(--line);
-    background: rgba(255,255,255,0.06);
-    color: var(--muted);
-    display:none;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    }
-    .clear-btn.show{ display:flex; }
-
-    .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:11px;cursor:pointer;user-select:none;}
-    .nav-item i{font-size:20px}
-    .nav-item.active{color:#fff}
-
-  </style>
+        /* --- Watchlist Page --- */
+        .watchlist-card { display: flex; gap: 15px; background-color: var(--card-bg); padding: 10px; border-radius: 15px; width: 280px; flex-shrink: 0; align-items: center; }
+        .watchlist-poster { width: 80px; height: 120px; border-radius: 10px; object-fit: cover; }
+        .watchlist-info { flex-grow: 1; }
+        .watchlist-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
+        .watchlist-year { font-size: 14px; color: var(--secondary-text); }
+        .watchlist-action { color: var(--accent-color); font-size: 20px; }
+    </style>
 </head>
-
 <body>
 
-    <!-- Header -->
-    <div class="header">
-    <div class="user-profile">
-        <img src="" class="avatar" id="userAvatar" alt="avatar">
-        <div>
-        <div class="welcome-text">خوش اومدی 👋</div>
-        <div class="username-text" id="userName">کاربر عزیز</div>
+    <div class="app-container home-page">
+        <div class="header">
+            <div class="user-profile">
+                <img src="https://via.placeholder.com/40" class="avatar" alt="User">
+                <div>
+                    <div class="welcome-text">Hello 👋</div>
+                    <div class="username-text">Floyd Miles</div>
+                </div>
+            </div>
+            <div class="header-actions">
+                <i class="bi bi-bell icon-btn"></i>
+                <i class="bi bi-list icon-btn"></i>
+            </div>
+        </div>
+
+        <div class="horizontal-scroll main-banner-scroll">
+            <div class="movie-card"><img src="https://via.placeholder.com/120x220" class="movie-poster" alt="Banner 1"></div>
+            <div class="movie-card"><img src="https://via.placeholder.com/120x220" class="movie-poster" alt="Banner 2"></div>
+            <div class="movie-card"><img src="https://via.placeholder.com/120x220" class="movie-poster" alt="Banner 3"></div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">Categories</div>
+            <a href="#" class="see-all">See All</a>
+        </div>
+        <div class="horizontal-scroll categories">
+            <a href="#" class="category-btn active">All</a>
+            <a href="#" class="category-btn">Action</a>
+            <a href="#" class="category-btn">Comedy</a>
+            <a href="#" class="category-btn">Drama</a>
+            <a href="#" class="category-btn">Romance</a>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">Latest Movie</div>
+            <a href="#" class="see-all">See All</a>
+        </div>
+        <div class="horizontal-scroll latest-movies">
+            <div class="movie-card">
+                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Movie 1">
+                <div class="movie-title">Thor: Love and Thunder</div>
+            </div>
+            <div class="movie-card">
+                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Movie 2">
+                <div class="movie-title">Avatar: The Way of Water</div>
+            </div>
+            <div class="movie-card">
+                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Movie 3">
+                <div class="movie-title">Black Panther</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">Trending Now</div>
+            <a href="#" class="see-all">See All</a>
+        </div>
+        <div class="horizontal-scroll trending-movies">
+            <div class="movie-card">
+                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Trending 1">
+            </div>
+            <div class="movie-card">
+                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Trending 2">
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active"><i class="bi bi-house-door-fill"></i> Home</a>
+            <a href="#" class="nav-item"><i class="bi bi-grid-fill"></i> Categories</a>
+            <a href="#" class="nav-search-btn"><i class="bi bi-search" style="font-size: 28px; color: white;"></i></a>
+            <a href="#" class="nav-item"><i class="bi bi-bookmark"></i> Watchlist</a>
+            <a href="#" class="nav-item"><i class="bi bi-person"></i> Profile</a>
         </div>
     </div>
 
-    <div class="header-actions">
-        <div class="icon-btn" id="btnSearch" title="جستجو"><i class="bi bi-search"></i></div>
-        <div class="icon-btn" id="btnRefresh" title="رفرش"><i class="bi bi-arrow-repeat"></i></div>
-        <div class="icon-btn" id="btnMenu" title="منو"><i class="bi bi-list"></i></div>
-    </div>
-
-    <!-- ✅ Search (درست داخل header) -->
-    <div id="searchContainer" class="search-wrap">
-        <div class="search-box">
-        <i class="bi bi-search search-ico"></i>
-        <input type="text" id="searchInput" placeholder="نام فیلم یا سریال را بنویسید...">
-        <button id="btnClearSearch" class="clear-btn" type="button" aria-label="پاک کردن">
-            <i class="bi bi-x-lg"></i>
-        </button>
+    <div class="app-container details-page">
+        <div class="header">
+            <i class="bi bi-chevron-left icon-btn"></i>
+            <i class="bi bi-bookmark icon-btn"></i>
+        </div>
+        <div class="details-cover">
+            <img src="https://via.placeholder.com/375x400" alt="Thor Cover">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/IMAX_logo.svg/1200px-IMAX_logo.svg.png" class="imax-logo" alt="IMAX">
+        </div>
+        <div class="movie-info-container">
+            <div class="genres">
+                <span class="genre-tag">Action</span>
+                <span class="genre-tag">Fantasy</span>
+                <span class="genre-tag">Comedy</span>
+                <span class="genre-tag">Superhero</span>
+            </div>
+            <div class="movie-title-large">Thor: Love and Thunder</div>
+            <div class="meta-info">
+                <span>Released: July 2022</span>
+                <div class="imdb-rating">IMDb <i class="bi bi-star-fill" style="color: black; font-size: 12px;"></i> 6.2/10</div>
+            </div>
+            <div class="section-header" style="padding: 0 0 10px 0;">
+                <div class="section-title">Storyline</div>
+            </div>
+            <p class="storyline">The God of Thunder embarks on a quest for inner peace, but must return to action when Gorr the God Butcher threatens the extinction of all gods.</p>
+            <div class="section-header" style="padding: 0 0 10px 0;">
+                <div class="section-title">Cast & Characters</div>
+            </div>
+            <div class="horizontal-scroll cast-list">
+                <div class="cast-card">
+                    <img src="https://via.placeholder.com/50" class="cast-img" alt="Chris Hemsworth">
+                    <div class="cast-info">
+                        <div>Chris Hemsworth</div>
+                        <div style="color: var(--secondary-text);">Thor</div>
+                    </div>
+                </div>
+                <div class="cast-card">
+                    <img src="https://via.placeholder.com/50" class="cast-img" alt="Natalie Portman">
+                    <div class="cast-info">
+                        <div>Natalie Portman</div>
+                        <div style="color: var(--secondary-text);">Mighty Thor</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bottom-nav">
+            <a href="#" class="nav-item"><i class="bi bi-house-door"></i> Home</a>
+            <a href="#" class="nav-item"><i class="bi bi-grid"></i> Categories</a>
+            <a href="#" class="nav-search-btn"><i class="bi bi-search" style="font-size: 28px; color: white;"></i></a>
+            <a href="#" class="nav-item active"><i class="bi bi-bookmark-fill"></i> Watchlist</a>
+            <a href="#" class="nav-item"><i class="bi bi-person"></i> Profile</a>
         </div>
     </div>
-    </div>
 
-
-  <!-- HOME PAGE -->
-  <div id="pageHome" class="page active">
-
-    <div class="tabs">
-      <div class="tab active" data-type="">همه</div>
-      <div class="tab" data-type="movie">فیلم</div>
-      <div class="tab" data-type="series">سریال</div>
-    </div>
-
-    <div class="section-header">
-      <div class="section-title">محبوب‌ترین‌ها</div>
-      <a href="#" class="view-all" id="refreshPopular">رفرش</a>
-    </div>
-
-    <div class="scroll-container" id="popularContainer">
-      <div class="movie-card-large"><div class="poster-container"><div class="skeleton" style="width:100%;height:100%"></div></div></div>
-      <div class="movie-card-large"><div class="poster-container"><div class="skeleton" style="width:100%;height:100%"></div></div></div>
-    </div>
-
-    <div class="section-header">
-      <div class="section-title" id="newTitle">تازه‌ها</div>
-      <a href="#" class="view-all" id="refreshNew">رفرش</a>
-    </div>
-
-    <div class="vertical-list" id="newContainer">
-      <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-      <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-    </div>
-
-    <div class="load-more-wrap">
-      <button class="btn" id="btnLoadMore">نمایش بیشتر</button>
-    </div>
-  </div>
-
-  <!-- DETAIL PAGE -->
-  <div id="pageDetail" class="page">
-    <div class="detail-topbar">
-      <div class="back-btn" id="detailBack"><i class="bi bi-arrow-right"></i></div>
-      <div style="color:var(--muted);font-size:12px" id="detailType"></div>
-      <div style="width:42px"></div>
-    </div>
-
-    <div class="detail-hero">
-      <div class="detail-cover" id="detailCover">
-        <div class="skeleton" style="width:100%;height:100%"></div>
-      </div>
-
-      <div class="detail-title" id="detailTitle">...</div>
-      <div class="detail-meta" id="detailMeta"></div>
-      <div class="detail-overview" id="detailOverview"></div>
-    </div>
-
-    <div class="tree-wrap">
-      <div class="tree-title">
-        <h3>کیفیت‌ها / فصل‌ها</h3>
-        <div style="color:var(--muted);font-size:12px" id="treeHint"></div>
-      </div>
-      <div class="tree-box" id="treeBox">
-        <div class="skeleton" style="height: 120px; border-radius: 18px;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Nav -->
-  <div class="bottom-nav">
-    <div class="nav-item active" id="navHome"><i class="bi bi-house-door"></i><div>خانه</div></div>
-    <div class="nav-item" id="navTop"><i class="bi bi-fire"></i><div>محبوب‌ها</div></div>
-    <div class="nav-item" id="navNew"><i class="bi bi-clock-history"></i><div>تازه‌ها</div></div>
-    <div class="nav-item" id="navBack"><i class="bi bi-arrow-left-circle"></i><div>برگشت</div></div>
-  </div>
-
-<script>
-    const tg = window.Telegram.WebApp;
-    tg.expand();
-    tg.setHeaderColor('#0f1014');
-
-    // ✅ دریافت آدرس API
-    const urlParams = new URLSearchParams(window.location.search);
-    const API_URL = urlParams.get('api') || "http://127.0.0.1:8000";
-    console.log("Connected to API:", API_URL);
-
-    // --- State Variables ---
-    let currentType = "";
-    let currentPage = 1;
-    const limit = 12;
-    let totalPages = 1;
-    let loadingMore = false;
-    
-    // Search State
-    let searchTimeout;
-    let isSearching = false;
-
-    // Detail State
-    let detailStack = [];
-    let currentDetailCode = null;
-
-    // --- Helper Functions ---
-    function safeText(s) {
-      return (s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
-    }
-
-    function haptic(type='light'){
-      try { tg.HapticFeedback.impactOccurred(type); } catch(e){}
-    }
-
-    function pickGenres(genresStr) {
-      const arr = (genresStr || "").split(",").map(s => s.trim()).filter(Boolean);
-      return [arr[0] || "Movie", arr[1] || "HD"];
-    }
-
-    function setupUser() {
-      let avatarUrl = "https://ui-avatars.com/api/?name=Guest&background=111827&color=fff";
-      let name = "کاربر عزیز";
-      if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-        const u = tg.initDataUnsafe.user;
-        name = u.first_name + (u.last_name ? " " + u.last_name : "");
-        avatarUrl = u.photo_url ? u.photo_url : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=111827&color=fff`;
-      }
-      document.getElementById('userName').innerText = name;
-      document.getElementById('userAvatar').src = avatarUrl;
-    }
-
-    function showPage(id) {
-      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-
-    // --- Core Data Functions (Must be defined before Search Logic) ---
-    
-    function renderNew(items, append=false) {
-      const container = document.getElementById('newContainer');
-      if (!append) container.innerHTML = "";
-      if (!items || !items.length) {
-        if (!append) container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">موردی برای نمایش نیست.</div>`;
-        return;
-      }
-      items.forEach(m => {
-        const [g1,g2] = pickGenres(m.genres);
-        const card = document.createElement('div');
-        card.className = 'movie-card-small';
-        card.onclick = () => openDetail(m.code);
-        card.innerHTML = `
-          <img src="${m.poster}" class="small-poster" loading="lazy" alt="${safeText(m.title)}">
-          <div class="small-info">
-            <div class="small-title">${safeText(m.title)}</div>
-            <div class="small-meta">
-              <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${m.vote ?? 0}</span>
-              ${m.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(m.year)}</span>` : ``}
-              <span class="chip"><i class="bi bi-tags"></i> ${safeText(g1)}</span>
-              <span class="chip"><i class="bi bi-badge-hd"></i> ${safeText(g2)}</span>
+    <div class="app-container watchlist-page">
+        <div class="header">
+            <i class="bi bi-chevron-left icon-btn"></i>
+            <div class="section-title">Watchlist</div>
+            <div class="header-actions">
+                <i class="bi bi-bell icon-btn"></i>
+                <i class="bi bi-list icon-btn"></i>
             </div>
-          </div>
-          <div class="play-btn-small"><i class="bi bi-play-fill"></i></div>
-        `;
-        container.appendChild(card);
-      });
-    }
+        </div>
 
-    async function fetchNew(reset=true) {
-      try {
-        if (reset) {
-          currentPage = 1;
-          loadingMore = false;
-          document.getElementById('btnLoadMore').disabled = true;
-          document.getElementById('newContainer').innerHTML = `
-            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-            <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-          `;
-        }
-
-        const url = new URL(`${API_URL}/api/movies`);
-        url.searchParams.set("page", String(currentPage));
-        url.searchParams.set("limit", String(limit));
-        if (currentType) url.searchParams.set("type", currentType);
-
-        const res = await fetch(url.toString());
-        const data = await res.json();
-        totalPages = data.total_pages || 1;
-
-        renderNew(data.items || [], !reset);
-
-        const btn = document.getElementById('btnLoadMore');
-        // در حالت سرچ دکمه "نمایش بیشتر" را مخفی نگه دار
-        if (isSearching) {
-            btn.style.display = 'none';
-        } else {
-            btn.style.display = 'block';
-            btn.disabled = (currentPage >= totalPages);
-            btn.innerText = (currentPage >= totalPages) ? "پایان لیست" : "نمایش بیشتر";
-        }
-      } catch (e) { console.error(e); }
-    }
-
-    // --- Search Logic ---
-    const searchWrap = document.getElementById('searchContainer');
-    const searchInput = document.getElementById('searchInput');
-    const btnClearSearch = document.getElementById('btnClearSearch');
-
-    function setSearchUI(open){
-      searchWrap.classList.toggle('show', open);
-      if(open){
-        searchInput.focus();
-      } else {
-        searchInput.value = "";
-        btnClearSearch.classList.remove('show');
-        // اگر قبلاً سرچ کرده بودیم و الان بستیم، برگردیم به حالت عادی
-        if(isSearching) exitSearchMode();
-      }
-    }
-
-    function enterSearchMode(q){
-      isSearching = true;
-      document.getElementById('btnLoadMore').style.display = 'none';
-      const titleEl = document.getElementById('newTitle');
-      titleEl.innerHTML = `نتایج جستجو: <span style="color:var(--accent)">${safeText(q)}</span>`;
-    }
-
-    function exitSearchMode(){
-      isSearching = false;
-      document.getElementById('btnLoadMore').style.display = 'block';
-      document.getElementById('newTitle').innerText = (currentType === "movie" ? "تازه‌های فیلم" : currentType === "series" ? "تازه‌های سریال" : "تازه‌ها");
-      fetchNew(true);
-    }
-
-    // دکمه سرچ (هدر)
-    document.getElementById('btnSearch').addEventListener('click', () => {
-      haptic('light');
-      const open = !searchWrap.classList.contains('show');
-      setSearchUI(open);
-    });
-
-    // دکمه ضربدر
-    btnClearSearch.addEventListener('click', () => {
-      haptic('light');
-      searchInput.value = "";
-      btnClearSearch.classList.remove('show');
-      exitSearchMode();
-      searchInput.focus();
-    });
-
-    // تایپ
-    searchInput.addEventListener('input', (e) => {
-      const q = e.target.value.trim();
-      btnClearSearch.classList.toggle('show', q.length > 0);
-
-      clearTimeout(searchTimeout);
-
-      if(q.length === 0){
-        // اگر متن پاک شد ولی هنوز در حالت سرچ هستیم، خارج شو
-        if(isSearching) exitSearchMode();
-        return;
-      }
-
-      searchTimeout = setTimeout(() => performSearch(q), 500);
-    });
-
-    // اینتر
-    searchInput.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){
-        const q = searchInput.value.trim();
-        if(q){
-          clearTimeout(searchTimeout);
-          performSearch(q);
-          searchInput.blur(); // بستن کیبورد موبایل
-        }
-      }
-    });
-
-    async function performSearch(q){
-      enterSearchMode(q);
-
-      const container = document.getElementById('newContainer');
-      container.innerHTML = `
-        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-        <div class="skeleton" style="height: 86px; border-radius: 18px;"></div>
-      `;
-
-      try{
-        const url = new URL(`${API_URL}/api/movies`);
-        url.searchParams.set("q", q);
-        url.searchParams.set("limit", 20);
-        if(currentType) url.searchParams.set("type", currentType); 
-
-        const res = await fetch(url.toString());
-        const data = await res.json();
-
-        renderNew(data.items || []);
-      } catch(e){
-        console.error(e);
-        container.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:6px 2px">خطا در جستجو.</div>`;
-      }
-    }
-
-    // --- Popular & Load More Logic ---
-    
-    function renderPopular(movies) {
-      const container = document.getElementById('popularContainer');
-      container.innerHTML = "";
-      if (!movies || !movies.length) {
-        container.innerHTML = `<div style="padding:0 20px;color:var(--muted);font-size:12px">چیزی پیدا نشد.</div>`;
-        return;
-      }
-      movies.forEach(m => {
-        const [g1,g2] = pickGenres(m.genres);
-        const card = document.createElement('div');
-        card.className = 'movie-card-large';
-        card.onclick = () => openDetail(m.code);
-        card.innerHTML = `
-          <div class="poster-container">
-            <img src="${m.poster}" class="poster-img" loading="lazy" alt="${safeText(m.title)}">
-            <div class="poster-overlay"></div>
-            <div class="card-info">
-              <div class="movie-title">${safeText(m.title)}</div>
-              <div class="rating-row">
-                <span class="star"><i class="bi bi-star-fill"></i></span>
-                <span>${m.vote ?? 0}</span>
-                ${m.year ? `<span style="color:var(--muted);font-weight:700">• ${safeText(m.year)}</span>` : ``}
-              </div>
-              <div class="tags">
-                <span class="tag">${safeText(g1)}</span>
-                <span class="tag">${safeText(g2)}</span>
-              </div>
+        <div class="section-header">
+            <div class="section-title">Action</div>
+            <a href="#" class="see-all">See All</a>
+        </div>
+        <div class="horizontal-scroll">
+            <div class="watchlist-card">
+                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="John Wick 4">
+                <div class="watchlist-info">
+                    <div class="watchlist-title">John Wick: 4</div>
+                    <div class="watchlist-year">Keanu Reeves</div>
+                </div>
+                <i class="bi bi-bookmark-fill watchlist-action"></i>
             </div>
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
+            <div class="watchlist-card">
+                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="Extraction 2">
+                <div class="watchlist-info">
+                    <div class="watchlist-title">Extraction 2</div>
+                    <div class="watchlist-year">Chris Hemsworth</div>
+                </div>
+                <i class="bi bi-bookmark-fill watchlist-action"></i>
+            </div>
+        </div>
 
-    async function fetchPopular() {
-      try {
-        const res = await fetch(`${API_URL}/api/top?limit=10`);
-        const data = await res.json();
-        renderPopular(data);
-      } catch (e) { console.error(e); }
-    }
+        <div class="section-header">
+            <div class="section-title">Romance</div>
+            <a href="#" class="see-all">See All</a>
+        </div>
+        <div class="horizontal-scroll">
+            <div class="watchlist-card">
+                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="The Notebook">
+                <div class="watchlist-info">
+                    <div class="watchlist-title">The Notebook</div>
+                    <div class="watchlist-year">Ryan Gosling</div>
+                </div>
+                <i class="bi bi-bookmark-fill watchlist-action"></i>
+            </div>
+            <div class="watchlist-card">
+                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="Titanic">
+                <div class="watchlist-info">
+                    <div class="watchlist-title">Titanic</div>
+                    <div class="watchlist-year">Leonardo DiCaprio</div>
+                </div>
+                <i class="bi bi-bookmark-fill watchlist-action"></i>
+            </div>
+        </div>
 
-    async function loadMore() {
-      if (loadingMore) return;
-      if (currentPage >= totalPages) return;
-      loadingMore = true;
-      currentPage += 1;
-      await fetchNew(false);
-      loadingMore = false;
-    }
+        <div class="section-header">
+            <div class="section-title">Comedy</div>
+            <a href="#" class="see-all">See All</a>
+        </div>
+        <div class="horizontal-scroll">
+            <div class="watchlist-card">
+                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="Hangover">
+                <div class="watchlist-info">
+                    <div class="watchlist-title">Hangover</div>
+                    <div class="watchlist-year">Bradley Cooper</div>
+                </div>
+                <i class="bi bi-bookmark-fill watchlist-action"></i>
+            </div>
+        </div>
 
-    function setActiveTab(type) {
-      currentType = type;
-      document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.type === type));
-      // اگر در حال جستجو هستیم، فقط متغیر را ست کن، تایتل را عوض نکن
-      if (!isSearching) {
-          const title = document.getElementById('newTitle');
-          title.innerText = type === "movie" ? "تازه‌های فیلم" : type === "series" ? "تازه‌های سریال" : "تازه‌ها";
-          fetchNew(true);
-      } else {
-          // اگر در حال جستجو بودیم و تب عوض شد، دوباره با فیلتر جدید سرچ کن
-          const q = searchInput.value.trim();
-          if (q) performSearch(q);
-      }
-    }
+        <div class="bottom-nav">
+            <a href="#" class="nav-item"><i class="bi bi-house-door"></i> Home</a>
+            <a href="#" class="nav-item"><i class="bi bi-grid"></i> Categories</a>
+            <a href="#" class="nav-search-btn"><i class="bi bi-search" style="font-size: 28px; color: white;"></i></a>
+            <a href="#" class="nav-item active"><i class="bi bi-bookmark-fill"></i> Watchlist</a>
+            <a href="#" class="nav-item"><i class="bi bi-person"></i> Profile</a>
+        </div>
+    </div>
 
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => setActiveTab(tab.dataset.type));
-    });
-
-    document.getElementById('refreshPopular').addEventListener('click', (e) => { e.preventDefault(); fetchPopular(); });
-    document.getElementById('refreshNew').addEventListener('click', (e) => { e.preventDefault(); fetchNew(true); });
-    document.getElementById('btnLoadMore').addEventListener('click', loadMore);
-
-    // ===== DETAIL VIEW =====
-    async function openDetail(code){
-      haptic('medium');
-      currentDetailCode = code;
-      detailStack = [];
-      showPage('pageDetail');
-
-      // skeleton
-      document.getElementById('detailCover').innerHTML = `<div class="skeleton" style="width:100%;height:100%"></div>`;
-      document.getElementById('detailTitle').innerText = "در حال بارگذاری...";
-      document.getElementById('detailMeta').innerHTML = "";
-      document.getElementById('detailOverview').innerText = "";
-      document.getElementById('treeBox').innerHTML = `<div class="skeleton" style="height: 120px; border-radius: 18px;"></div>`;
-      document.getElementById('treeHint').innerText = "";
-
-      try{
-        const [cRes, tRes] = await Promise.all([
-          fetch(`${API_URL}/api/content/${code}`),
-          fetch(`${API_URL}/api/content/${code}/tree`)
-        ]);
-        const content = await cRes.json();
-        const treePayload = await tRes.json();
-
-        // render content
-        document.getElementById('detailCover').innerHTML = `<img src="${content.poster}" alt="${safeText(content.title)}">`;
-        document.getElementById('detailTitle').innerText = content.title;
-
-        const typeText = content.type === 'series' ? 'سریال' : 'فیلم';
-        document.getElementById('detailType').innerText = typeText;
-
-        let meta = `
-          <span class="chip"><i class="bi bi-star-fill" style="color:#f1c40f"></i> ${content.vote ?? 0}</span>
-          ${content.year ? `<span class="chip"><i class="bi bi-calendar3"></i> ${safeText(content.year)}</span>` : ``}
-        `;
-        if (content.genres) meta += `<span class="chip"><i class="bi bi-tags"></i> ${safeText(content.genres.split(",")[0] || "")}</span>`;
-        document.getElementById('detailMeta').innerHTML = meta;
-
-        const ov = (content.overview || "").trim();
-        document.getElementById('detailOverview').innerText = ov ? ov : "خلاصه‌ای برای این عنوان ثبت نشده.";
-
-        // store root nodes
-        detailStack = [{ title: "ریشه", nodes: treePayload.tree || [] }];
-        renderTreeLevel();
-
-      }catch(e){
-        console.error(e);
-        document.getElementById('treeBox').innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">خطا در اتصال به سرور.</div>`;
-      }
-    }
-
-    function renderTreeLevel(){
-      const box = document.getElementById('treeBox');
-      const hint = document.getElementById('treeHint');
-      const level = detailStack[detailStack.length - 1];
-      const nodes = level.nodes || [];
-
-      hint.innerText = detailStack.length > 1 ? `سطح ${detailStack.length-1}` : "";
-
-      if (!nodes.length){
-        box.innerHTML = `<div style="color:var(--muted);font-size:12px;padding:10px">چیزی برای نمایش نیست.</div>`;
-        return;
-      }
-
-      box.innerHTML = "";
-
-      if (detailStack.length > 1){
-        const backNode = document.createElement('div');
-        backNode.className = "node";
-        backNode.onclick = () => { haptic('light'); detailStack.pop(); renderTreeLevel(); };
-        backNode.innerHTML = `
-          <div class="node-left">
-            <i class="bi bi-arrow-right"></i>
-            <div class="node-text">بازگشت</div>
-          </div>
-          <div class="node-right">..</div>
-        `;
-        box.appendChild(backNode);
-      }
-
-      nodes.forEach(n => {
-        const isFolder = n.media_type === "folder";
-        const nodeEl = document.createElement('div');
-        nodeEl.className = "node";
-        nodeEl.onclick = () => {
-          if (isFolder){
-            haptic('light');
-            detailStack.push({ title: n.text, nodes: n.children || [] });
-            renderTreeLevel();
-          } else {
-            haptic('medium');
-            tg.sendData(`GET:${n.id}`);
-          }
-        };
-
-        nodeEl.innerHTML = `
-          <div class="node-left">
-            <i class="bi ${isFolder ? 'bi-folder2-open' : 'bi-download'}"></i>
-            <div class="node-text">${safeText(n.text)}</div>
-          </div>
-          <div class="node-right">${isFolder ? 'باز کن' : 'دانلود'}</div>
-        `;
-        box.appendChild(nodeEl);
-      });
-    }
-
-    document.getElementById('detailBack').addEventListener('click', () => {
-      haptic('light');
-      showPage('pageHome');
-      currentDetailCode = null;
-      detailStack = [];
-    });
-
-    // ===== Bottom nav =====
-    function setNavActive(id) {
-      document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
-      document.getElementById(id).classList.add('active');
-    }
-
-    document.getElementById('navHome').addEventListener('click', () => {
-      setNavActive('navHome');
-      showPage('pageHome');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-    document.getElementById('navTop').addEventListener('click', () => {
-      setNavActive('navTop');
-      showPage('pageHome');
-      document.querySelector('#popularContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    document.getElementById('navNew').addEventListener('click', () => {
-      setNavActive('navNew');
-      showPage('pageHome');
-      document.querySelector('#newContainer').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
-    document.getElementById('navBack').addEventListener('click', () => {
-      haptic('light');
-      if (document.getElementById('pageDetail').classList.contains('active')){
-        showPage('pageHome');
-        currentDetailCode = null;
-        detailStack = [];
-      } else {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    });
-
-    // Header buttons
-    document.getElementById('btnRefresh').addEventListener('click', () => {
-      haptic('light');
-      fetchPopular();
-      fetchNew(true);
-    });
-
-    document.getElementById('btnMenu').addEventListener('click', () => {
-      haptic('light');
-      tg.showPopup({
-        title: "NightCut",
-        message: "بعداً می‌تونی اینجا تنظیمات / راهنما / پروفایل اضافه کنی.",
-        buttons: [{ id: "ok", type: "ok", text: "باشه" }]
-      });
-    });
-
-    // Init
-    setupUser();
-    fetchPopular();
-    fetchNew(true);
-  </script>
 </body>
 </html>
