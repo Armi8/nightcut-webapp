@@ -1,355 +1,985 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie App</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <style>
-        :root {
-            --bg-color: #121212;
-            --text-color: #ffffff;
-            --accent-color: #8a2be2; /* Purple */
-            --secondary-text: #aaaaaa;
-            --card-bg: #1e1e1e;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <title>NightCut MiniApp</title>
 
-        body {
-            margin: 0;
-            font-family: 'Vazirmatn', sans-serif; /* استفاده از فونت فارسی مناسب */
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            display: flex;
-            justify-content: center; /* برای نمایش سه گوشی کنار هم */
-            gap: 20px;
-            padding: 20px;
-        }
+  <!-- Telegram WebApp -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-        .app-container {
-            width: 375px; /* عرض تقریبی یک گوشی */
-            height: 812px; /* ارتفاع تقریبی یک گوشی */
-            background-color: var(--bg-color);
-            border-radius: 30px;
-            overflow: hidden;
-            position: relative;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
 
-        /* --- Header & Navigation --- */
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px;
-        }
-        .user-profile { display: flex; align-items: center; gap: 10px; }
-        .avatar { width: 40px; height: 40px; border-radius: 50%; }
-        .welcome-text { font-size: 14px; color: var(--secondary-text); }
-        .username-text { font-weight: bold; }
-        .header-actions .icon-btn { margin-left: 10px; }
-        .icon-btn { font-size: 24px; cursor: pointer; }
+  <!-- Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
-        .bottom-nav {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: linear-gradient(to top, rgba(138, 43, 226, 0.3), transparent); /* افکت نورانی بنفش */
-            display: flex;
-            justify-content: space-around;
-            padding: 15px 0;
-            border-radius: 20px 20px 0 0;
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: var(--secondary-text);
-            text-decoration: none;
-            font-size: 12px;
-        }
-        .nav-item i { font-size: 24px; margin-bottom: 5px; }
-        .nav-item.active { color: var(--text-color); }
-        .nav-search-btn {
-            background-color: var(--accent-color);
-            width: 60px; height: 60px; border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            margin-top: -30px;
-            box-shadow: 0 4px 10px rgba(138, 43, 226, 0.5);
-        }
+  <style>
+    :root{
+      --bg:#0f1014;
+      --card:#15161a;
+      --card2:#1a1b1f;
+      --text:#ffffff;
+      --muted:#9aa0aa;
+      --line: rgba(255,255,255,0.07);
+      --accent:#a855f7; /* بنفش */
+      --accent2:#7c3aed;
+      --shadow: 0 12px 40px rgba(0,0,0,.55);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Vazirmatn", system-ui, sans-serif;
+      background:
+        radial-gradient(900px 500px at 15% -10%, rgba(168,85,247,.22), transparent 60%),
+        radial-gradient(700px 420px at 90% 5%, rgba(124,58,237,.18), transparent 55%),
+        var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    .app{
+      max-width: 430px;
+      margin:0 auto;
+      min-height:100vh;
+      padding: 14px 14px 92px;
+    }
 
-        /* --- Common Components --- */
-        .section-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 20px;
-        }
-        .section-title { font-size: 18px; font-weight: bold; }
-        .see-all { color: var(--accent-color); text-decoration: none; font-size: 14px; }
-        .horizontal-scroll {
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding: 10px 20px;
-            scrollbar-width: none; /* Firefox */
-        }
-        .horizontal-scroll::-webkit-scrollbar { display: none; /* Chrome, Safari, Opera */ }
+    /* Top bar */
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-top:6px;
+      margin-bottom:14px;
+    }
+    .userbox{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .avatar{
+      width:40px;height:40px;border-radius:999px;
+      background: linear-gradient(135deg, rgba(168,85,247,.35), rgba(124,58,237,.15));
+      border:1px solid rgba(255,255,255,.12);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .avatar img{width:100%;height:100%;object-fit:cover}
+    .hello{
+      display:flex;flex-direction:column;
+      min-width:0;
+    }
+    .hello .t1{
+      font-weight:700;font-size:13px;color:rgba(255,255,255,.85)
+    }
+    .hello .t2{
+      font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+    .top-actions{
+      display:flex;align-items:center;gap:10px;
+    }
+    .iconbtn{
+      width:40px;height:40px;border-radius:14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow: 0 6px 20px rgba(0,0,0,.35);
+      cursor:pointer;
+    }
+    .iconbtn:active{transform:scale(.98)}
+    .iconbtn i{font-size:18px;color:rgba(255,255,255,.9)}
 
-        /* --- Home Page --- */
-        .categories .category-btn {
-            padding: 8px 16px;
-            background-color: var(--card-bg);
-            border-radius: 20px;
-            color: var(--secondary-text);
-            text-decoration: none;
-            white-space: nowrap;
-        }
-        .categories .category-btn.active {
-            background-color: var(--accent-color);
-            color: var(--text-color);
-        }
-        .movie-card { width: 120px; flex-shrink: 0; }
-        .movie-poster { width: 100%; height: 180px; border-radius: 15px; object-fit: cover; }
-        .movie-title { font-size: 14px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .main-banner-scroll .movie-poster { height: 220px; }
+    /* Section */
+    .section{margin-top:14px}
+    .section-head{
+      display:flex;align-items:center;justify-content:space-between;
+      margin: 6px 2px 10px;
+    }
+    .section-title{
+      font-weight:900;font-size:16px;
+      letter-spacing:-.2px;
+    }
+    .seeall{
+      font-size:12px;color:rgba(255,255,255,.65);
+      cursor:pointer;
+    }
 
-        /* --- Details Page --- */
-        .details-page .header { position: absolute; width: 100%; z-index: 10; }
-        .details-cover {
-            width: 100%; height: 50%; position: relative;
-        }
-        .details-cover img { width: 100%; height: 100%; object-fit: cover; border-radius: 0 0 30px 30px; }
-        .imax-logo { position: absolute; top: 60px; left: 50%; transform: translateX(-50%); width: 120px; }
-        .movie-info-container { padding: 20px; margin-top: -40px; background-color: var(--bg-color); border-radius: 30px 30px 0 0; position: relative; }
-        .genres { display: flex; gap: 10px; margin-bottom: 15px; }
-        .genre-tag { padding: 5px 12px; background-color: var(--card-bg); border-radius: 15px; font-size: 12px; }
-        .movie-title-large { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-        .meta-info { display: flex; justify-content: space-between; align-items: center; color: var(--secondary-text); font-size: 14px; margin-bottom: 20px; }
-        .imdb-rating { display: flex; align-items: center; gap: 5px; background-color: #f5c518; color: #000; padding: 4px 8px; border-radius: 5px; font-weight: bold; }
-        .storyline { color: var(--secondary-text); font-size: 14px; line-height: 1.6; margin-bottom: 20px; }
-        .cast-list .cast-card { display: flex; align-items: center; gap: 10px; background-color: var(--card-bg); padding: 10px; border-radius: 15px; width: 160px; flex-shrink: 0; }
-        .cast-img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
-        .cast-info div { font-size: 12px; }
+    /* Chips (categories) */
+    .chips{
+      display:flex;
+      gap:10px;
+      overflow:auto;
+      padding: 2px 2px 6px;
+      scrollbar-width:none;
+    }
+    .chips::-webkit-scrollbar{display:none}
+    .chip{
+      flex:0 0 auto;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.78);
+      font-weight:700;
+      font-size:12px;
+      cursor:pointer;
+      transition:.2s;
+      user-select:none;
+    }
+    .chip.active{
+      background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(124,58,237,.85));
+      border-color: rgba(255,255,255,.12);
+      color:#fff;
+      box-shadow: 0 10px 30px rgba(168,85,247,.25);
+    }
 
-        /* --- Watchlist Page --- */
-        .watchlist-card { display: flex; gap: 15px; background-color: var(--card-bg); padding: 10px; border-radius: 15px; width: 280px; flex-shrink: 0; align-items: center; }
-        .watchlist-poster { width: 80px; height: 120px; border-radius: 10px; object-fit: cover; }
-        .watchlist-info { flex-grow: 1; }
-        .watchlist-title { font-size: 16px; font-weight: bold; margin-bottom: 5px; }
-        .watchlist-year { font-size: 14px; color: var(--secondary-text); }
-        .watchlist-action { color: var(--accent-color); font-size: 20px; }
-    </style>
+    /* Horizontal card rail */
+    .rail{
+      display:flex;
+      gap:12px;
+      overflow:auto;
+      padding: 4px 2px 12px;
+      scrollbar-width:none;
+    }
+    .rail::-webkit-scrollbar{display:none}
+
+    .movie-card{
+      width: 130px;
+      flex: 0 0 auto;
+      border-radius: 20px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      overflow:hidden;
+      cursor:pointer;
+      position:relative;
+    }
+    .movie-card .poster{
+      width:100%;
+      height: 175px;
+      background:#222;
+      display:block;
+      object-fit:cover;
+    }
+    .movie-card .meta{
+      padding: 10px 10px 12px;
+    }
+    .movie-card .name{
+      font-weight:900;
+      font-size:13px;
+      line-height:1.2;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .movie-card .sub{
+      margin-top:4px;
+      font-size:11px;
+      color: rgba(255,255,255,.62);
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .bookmark{
+      position:absolute;
+      top:10px; left:10px;
+      width:34px;height:34px;border-radius:14px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      display:flex;align-items:center;justify-content:center;
+      backdrop-filter: blur(10px);
+      cursor:pointer;
+    }
+    .bookmark i{font-size:16px;color:#fff;opacity:.9}
+
+    /* Hero (featured) */
+    .hero{
+      border-radius: 26px;
+      overflow:hidden;
+      position:relative;
+      height: 330px;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow: var(--shadow);
+      background: #111;
+    }
+    .hero img{
+      width:100%;height:100%;object-fit:cover;display:block;
+      filter: contrast(1.05) saturate(1.05);
+    }
+    .hero::after{
+      content:"";
+      position:absolute;inset:0;
+      background:
+        linear-gradient(0deg, rgba(15,16,20,1) 0%, rgba(15,16,20,.15) 55%, rgba(15,16,20,.05) 100%),
+        radial-gradient(900px 450px at 20% 0%, rgba(168,85,247,.25), transparent 60%);
+    }
+    .hero-overlay{
+      position:absolute;
+      inset:auto 0 0 0;
+      padding: 14px 14px 16px;
+      z-index:2;
+    }
+    .tags{
+      display:flex;gap:8px;flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .tag{
+      padding:7px 12px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.08);
+      color: rgba(255,255,255,.78);
+    }
+    .hero-title{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+    }
+    .hero-title h2{
+      margin:0;
+      font-size:18px;
+      font-weight:950;
+      letter-spacing:-.3px;
+      line-height:1.2;
+      max-width:72%;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .imdb{
+      display:flex;align-items:center;gap:8px;
+      background: rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:900;
+      backdrop-filter: blur(10px);
+      flex:0 0 auto;
+    }
+    .imdb .badge{
+      background: #facc15;
+      color:#111;
+      border-radius: 999px;
+      padding:2px 8px;
+      font-weight:1000;
+      font-size:11px;
+    }
+    .imdb .star{color:#facc15}
+
+    .hero-desc{
+      margin-top:10px;
+      color: rgba(255,255,255,.72);
+      font-size:12px;
+      line-height:1.55;
+      max-height: 56px;
+      overflow:hidden;
+    }
+
+    /* Bottom nav */
+    .bottom{
+      position: fixed;
+      right:0;left:0;bottom:0;
+      padding: 12px 0 18px;
+      display:flex;
+      justify-content:center;
+      z-index:50;
+    }
+    .nav{
+      width:min(430px, calc(100% - 26px));
+      background: rgba(21,22,26,.78);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 26px;
+      padding: 12px 14px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.6);
+      position:relative;
+    }
+    .nav-item{
+      width:64px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:6px;
+      color: rgba(255,255,255,.65);
+      font-size:10px;
+      font-weight:800;
+      cursor:pointer;
+      user-select:none;
+    }
+    .nav-item i{font-size:18px}
+    .nav-item.active{color:#fff}
+    .nav-item.active i{color: #fff}
+
+    .fab{
+      width:56px;height:56px;border-radius: 20px;
+      background: radial-gradient(70% 70% at 30% 30%, rgba(255,255,255,.20), transparent 55%),
+                  linear-gradient(135deg, rgba(168,85,247,1), rgba(124,58,237,1));
+      box-shadow: 0 18px 40px rgba(168,85,247,.32);
+      border:1px solid rgba(255,255,255,.14);
+      display:flex;align-items:center;justify-content:center;
+      position:absolute;
+      top:-18px;
+      left:50%;
+      transform:translateX(-50%);
+      cursor:pointer;
+    }
+    .fab i{font-size:22px;color:#fff}
+
+    /* Drawer / Modal (Movie details) */
+    .sheet-backdrop{
+      position:fixed;inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      z-index:100;
+    }
+    .sheet{
+      position:fixed;
+      right:0;left:0;bottom:-100%;
+      margin:0 auto;
+      width:min(430px, 100%);
+      background: rgba(21,22,26,.92);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 26px 26px 0 0;
+      box-shadow: 0 24px 60px rgba(0,0,0,.75);
+      backdrop-filter: blur(18px);
+      padding: 14px 14px 18px;
+      z-index:101;
+      transition: .28s ease;
+    }
+    .sheet.open{bottom:0}
+    .sheet-head{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      margin-bottom:10px;
+    }
+    .sheet-head .grab{
+      width: 70px;height:5px;border-radius:999px;
+      background: rgba(255,255,255,.18);
+      margin: 2px auto 10px;
+    }
+    .sheet-title{
+      font-weight:950;font-size:16px;
+      margin: 2px 0 6px;
+    }
+    .sheet-row{
+      display:flex;gap:12px;align-items:flex-start;
+    }
+    .sheet-poster{
+      width:110px;height:150px;border-radius:18px;
+      border:1px solid rgba(255,255,255,.10);
+      overflow:hidden;flex:0 0 auto;
+      background:#111;
+    }
+    .sheet-poster img{width:100%;height:100%;object-fit:cover}
+    .sheet-info{flex:1;min-width:0}
+    .mini{
+      color:rgba(255,255,255,.7);
+      font-size:12px;line-height:1.6;
+      max-height: 95px; overflow:auto;
+      padding-right:2px;
+    }
+    .actions{
+      display:flex;gap:10px;margin-top:12px;
+    }
+    .btn{
+      flex:1;
+      border-radius: 16px;
+      padding: 12px 12px;
+      font-weight:950;
+      font-size:13px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:#fff;
+      cursor:pointer;
+    }
+    .btn.primary{
+      background: linear-gradient(135deg, rgba(168,85,247,1), rgba(124,58,237,1));
+      box-shadow: 0 14px 30px rgba(168,85,247,.22);
+    }
+
+    /* Search overlay */
+    .search-wrap{
+      position: fixed; inset:0;
+      display:none;
+      z-index:120;
+      background: rgba(0,0,0,.65);
+      backdrop-filter: blur(10px);
+      padding: 14px;
+    }
+    .search-box{
+      max-width:430px;margin: 0 auto;
+      background: rgba(21,22,26,.92);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      padding: 12px;
+      box-shadow: var(--shadow);
+    }
+    .search-top{
+      display:flex;gap:10px;align-items:center;
+    }
+    .input{
+      flex:1;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:#fff;
+      border-radius: 16px;
+      padding: 12px 12px;
+      font-family: inherit;
+      font-weight:700;
+      outline:none;
+    }
+    .close{
+      width:44px;height:44px;border-radius:16px;
+      background: rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+    }
+    .close i{font-size:20px}
+    .search-results{
+      margin-top:12px;
+      display:flex;flex-direction:column;gap:10px;
+      max-height: 65vh;
+      overflow:auto;
+    }
+    .result{
+      display:flex;gap:12px;align-items:center;
+      padding:10px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+    }
+    .result img{
+      width:52px;height:70px;border-radius:14px;object-fit:cover;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .result .rname{font-weight:950;font-size:13px;margin-bottom:4px}
+    .result .rsub{font-size:11px;color:rgba(255,255,255,.65)}
+  </style>
 </head>
+
 <body>
+  <div class="app">
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="userbox">
+        <div class="avatar" id="avatar">
+          <i class="bi bi-person-fill"></i>
+        </div>
+        <div class="hello">
+          <div class="t1" id="helloText">سلام 👋</div>
+          <div class="t2" id="userName">کاربر</div>
+        </div>
+      </div>
 
-    <div class="app-container home-page">
-        <div class="header">
-            <div class="user-profile">
-                <img src="https://via.placeholder.com/40" class="avatar" alt="User">
-                <div>
-                    <div class="welcome-text">Hello 👋</div>
-                    <div class="username-text">Floyd Miles</div>
-                </div>
-            </div>
-            <div class="header-actions">
-                <i class="bi bi-bell icon-btn"></i>
-                <i class="bi bi-list icon-btn"></i>
-            </div>
-        </div>
-
-        <div class="horizontal-scroll main-banner-scroll">
-            <div class="movie-card"><img src="https://via.placeholder.com/120x220" class="movie-poster" alt="Banner 1"></div>
-            <div class="movie-card"><img src="https://via.placeholder.com/120x220" class="movie-poster" alt="Banner 2"></div>
-            <div class="movie-card"><img src="https://via.placeholder.com/120x220" class="movie-poster" alt="Banner 3"></div>
-        </div>
-
-        <div class="section-header">
-            <div class="section-title">Categories</div>
-            <a href="#" class="see-all">See All</a>
-        </div>
-        <div class="horizontal-scroll categories">
-            <a href="#" class="category-btn active">All</a>
-            <a href="#" class="category-btn">Action</a>
-            <a href="#" class="category-btn">Comedy</a>
-            <a href="#" class="category-btn">Drama</a>
-            <a href="#" class="category-btn">Romance</a>
-        </div>
-
-        <div class="section-header">
-            <div class="section-title">Latest Movie</div>
-            <a href="#" class="see-all">See All</a>
-        </div>
-        <div class="horizontal-scroll latest-movies">
-            <div class="movie-card">
-                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Movie 1">
-                <div class="movie-title">Thor: Love and Thunder</div>
-            </div>
-            <div class="movie-card">
-                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Movie 2">
-                <div class="movie-title">Avatar: The Way of Water</div>
-            </div>
-            <div class="movie-card">
-                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Movie 3">
-                <div class="movie-title">Black Panther</div>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <div class="section-title">Trending Now</div>
-            <a href="#" class="see-all">See All</a>
-        </div>
-        <div class="horizontal-scroll trending-movies">
-            <div class="movie-card">
-                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Trending 1">
-            </div>
-            <div class="movie-card">
-                <img src="https://via.placeholder.com/120x180" class="movie-poster" alt="Trending 2">
-            </div>
-        </div>
-
-        <div class="bottom-nav">
-            <a href="#" class="nav-item active"><i class="bi bi-house-door-fill"></i> Home</a>
-            <a href="#" class="nav-item"><i class="bi bi-grid-fill"></i> Categories</a>
-            <a href="#" class="nav-search-btn"><i class="bi bi-search" style="font-size: 28px; color: white;"></i></a>
-            <a href="#" class="nav-item"><i class="bi bi-bookmark"></i> Watchlist</a>
-            <a href="#" class="nav-item"><i class="bi bi-person"></i> Profile</a>
-        </div>
+      <div class="top-actions">
+        <div class="iconbtn" id="notifBtn" title="اعلان‌ها"><i class="bi bi-bell"></i></div>
+        <div class="iconbtn" id="menuBtn" title="منو"><i class="bi bi-list"></i></div>
+      </div>
     </div>
 
-    <div class="app-container details-page">
-        <div class="header">
-            <i class="bi bi-chevron-left icon-btn"></i>
-            <i class="bi bi-bookmark icon-btn"></i>
+    <!-- Featured / Hero -->
+    <div class="hero" id="hero" style="display:none">
+      <img id="heroImg" alt="featured"/>
+      <div class="hero-overlay">
+        <div class="tags" id="heroTags"></div>
+
+        <div class="hero-title">
+          <h2 id="heroTitle">—</h2>
+          <div class="imdb">
+            <span class="badge">IMDb</span>
+            <span class="star">★</span>
+            <span id="heroRate">—</span>
+          </div>
         </div>
-        <div class="details-cover">
-            <img src="https://via.placeholder.com/375x400" alt="Thor Cover">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/IMAX_logo.svg/1200px-IMAX_logo.svg.png" class="imax-logo" alt="IMAX">
-        </div>
-        <div class="movie-info-container">
-            <div class="genres">
-                <span class="genre-tag">Action</span>
-                <span class="genre-tag">Fantasy</span>
-                <span class="genre-tag">Comedy</span>
-                <span class="genre-tag">Superhero</span>
-            </div>
-            <div class="movie-title-large">Thor: Love and Thunder</div>
-            <div class="meta-info">
-                <span>Released: July 2022</span>
-                <div class="imdb-rating">IMDb <i class="bi bi-star-fill" style="color: black; font-size: 12px;"></i> 6.2/10</div>
-            </div>
-            <div class="section-header" style="padding: 0 0 10px 0;">
-                <div class="section-title">Storyline</div>
-            </div>
-            <p class="storyline">The God of Thunder embarks on a quest for inner peace, but must return to action when Gorr the God Butcher threatens the extinction of all gods.</p>
-            <div class="section-header" style="padding: 0 0 10px 0;">
-                <div class="section-title">Cast & Characters</div>
-            </div>
-            <div class="horizontal-scroll cast-list">
-                <div class="cast-card">
-                    <img src="https://via.placeholder.com/50" class="cast-img" alt="Chris Hemsworth">
-                    <div class="cast-info">
-                        <div>Chris Hemsworth</div>
-                        <div style="color: var(--secondary-text);">Thor</div>
-                    </div>
-                </div>
-                <div class="cast-card">
-                    <img src="https://via.placeholder.com/50" class="cast-img" alt="Natalie Portman">
-                    <div class="cast-info">
-                        <div>Natalie Portman</div>
-                        <div style="color: var(--secondary-text);">Mighty Thor</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="bottom-nav">
-            <a href="#" class="nav-item"><i class="bi bi-house-door"></i> Home</a>
-            <a href="#" class="nav-item"><i class="bi bi-grid"></i> Categories</a>
-            <a href="#" class="nav-search-btn"><i class="bi bi-search" style="font-size: 28px; color: white;"></i></a>
-            <a href="#" class="nav-item active"><i class="bi bi-bookmark-fill"></i> Watchlist</a>
-            <a href="#" class="nav-item"><i class="bi bi-person"></i> Profile</a>
-        </div>
+
+        <div class="hero-desc" id="heroDesc"></div>
+      </div>
     </div>
 
-    <div class="app-container watchlist-page">
-        <div class="header">
-            <i class="bi bi-chevron-left icon-btn"></i>
-            <div class="section-title">Watchlist</div>
-            <div class="header-actions">
-                <i class="bi bi-bell icon-btn"></i>
-                <i class="bi bi-list icon-btn"></i>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <div class="section-title">Action</div>
-            <a href="#" class="see-all">See All</a>
-        </div>
-        <div class="horizontal-scroll">
-            <div class="watchlist-card">
-                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="John Wick 4">
-                <div class="watchlist-info">
-                    <div class="watchlist-title">John Wick: 4</div>
-                    <div class="watchlist-year">Keanu Reeves</div>
-                </div>
-                <i class="bi bi-bookmark-fill watchlist-action"></i>
-            </div>
-            <div class="watchlist-card">
-                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="Extraction 2">
-                <div class="watchlist-info">
-                    <div class="watchlist-title">Extraction 2</div>
-                    <div class="watchlist-year">Chris Hemsworth</div>
-                </div>
-                <i class="bi bi-bookmark-fill watchlist-action"></i>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <div class="section-title">Romance</div>
-            <a href="#" class="see-all">See All</a>
-        </div>
-        <div class="horizontal-scroll">
-            <div class="watchlist-card">
-                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="The Notebook">
-                <div class="watchlist-info">
-                    <div class="watchlist-title">The Notebook</div>
-                    <div class="watchlist-year">Ryan Gosling</div>
-                </div>
-                <i class="bi bi-bookmark-fill watchlist-action"></i>
-            </div>
-            <div class="watchlist-card">
-                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="Titanic">
-                <div class="watchlist-info">
-                    <div class="watchlist-title">Titanic</div>
-                    <div class="watchlist-year">Leonardo DiCaprio</div>
-                </div>
-                <i class="bi bi-bookmark-fill watchlist-action"></i>
-            </div>
-        </div>
-
-        <div class="section-header">
-            <div class="section-title">Comedy</div>
-            <a href="#" class="see-all">See All</a>
-        </div>
-        <div class="horizontal-scroll">
-            <div class="watchlist-card">
-                <img src="https://via.placeholder.com/80x120" class="watchlist-poster" alt="Hangover">
-                <div class="watchlist-info">
-                    <div class="watchlist-title">Hangover</div>
-                    <div class="watchlist-year">Bradley Cooper</div>
-                </div>
-                <i class="bi bi-bookmark-fill watchlist-action"></i>
-            </div>
-        </div>
-
-        <div class="bottom-nav">
-            <a href="#" class="nav-item"><i class="bi bi-house-door"></i> Home</a>
-            <a href="#" class="nav-item"><i class="bi bi-grid"></i> Categories</a>
-            <a href="#" class="nav-search-btn"><i class="bi bi-search" style="font-size: 28px; color: white;"></i></a>
-            <a href="#" class="nav-item active"><i class="bi bi-bookmark-fill"></i> Watchlist</a>
-            <a href="#" class="nav-item"><i class="bi bi-person"></i> Profile</a>
-        </div>
+    <!-- Categories -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">دسته‌بندی‌ها</div>
+        <div class="seeall" id="catAllBtn">مشاهده همه</div>
+      </div>
+      <div class="chips" id="chips"></div>
     </div>
 
+    <!-- Latest -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">جدیدترین‌ها</div>
+        <div class="seeall" id="latestAllBtn">مشاهده همه</div>
+      </div>
+      <div class="rail" id="latestRail"></div>
+    </div>
+
+    <!-- Trending -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title">ترند این روزها</div>
+        <div class="seeall" id="trendAllBtn">مشاهده همه</div>
+      </div>
+      <div class="rail" id="trendRail"></div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom">
+    <div class="nav">
+      <div class="nav-item active" data-tab="home"><i class="bi bi-house-door"></i><div>خانه</div></div>
+      <div class="nav-item" data-tab="categories"><i class="bi bi-grid"></i><div>دسته‌ها</div></div>
+
+      <div class="fab" id="searchFab" title="جستجو"><i class="bi bi-search"></i></div>
+
+      <div class="nav-item" data-tab="watchlist"><i class="bi bi-bookmark"></i><div>واچ‌لیست</div></div>
+      <div class="nav-item" data-tab="profile"><i class="bi bi-person"></i><div>پروفایل</div></div>
+    </div>
+  </div>
+
+  <!-- Movie Sheet -->
+  <div class="sheet-backdrop" id="sheetBackdrop"></div>
+  <div class="sheet" id="sheet">
+    <div class="sheet-head">
+      <div style="width:44px"></div>
+      <div class="grab"></div>
+      <div class="iconbtn" id="sheetClose" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.06)">
+        <i class="bi bi-x-lg"></i>
+      </div>
+    </div>
+
+    <div class="sheet-title" id="sheetTitle">—</div>
+    <div class="sheet-row">
+      <div class="sheet-poster"><img id="sheetImg" alt="poster"></div>
+      <div class="sheet-info">
+        <div class="imdb" style="display:inline-flex;margin-bottom:10px">
+          <span class="badge">IMDb</span>
+          <span class="star">★</span>
+          <span id="sheetRate">—</span>
+        </div>
+        <div class="mini" id="sheetDesc"></div>
+
+        <div class="actions">
+          <button class="btn primary" id="downloadBtn"><i class="bi bi-download"></i> دانلود</button>
+          <button class="btn" id="watchlistBtn"><i class="bi bi-bookmark-plus"></i> واچ‌لیست</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Search -->
+  <div class="search-wrap" id="searchWrap">
+    <div class="search-box">
+      <div class="search-top">
+        <input class="input" id="searchInput" placeholder="اسم فیلم/سریال رو بنویس..." />
+        <div class="close" id="searchClose"><i class="bi bi-x-lg"></i></div>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+  </div>
+
+  <script>
+    /*************************************************
+     * 1) تنظیم API (فقط این بخش رو با API خودت ست کن)
+     *************************************************/
+    const API = {
+    // ✅ چون API تو خودش با /api شروع میشه، اینجا فقط دامین/پورت رو بده
+    BASE_URL: "https://YOUR_DOMAIN_OR_IP",  // مثال: http://127.0.0.1:8000
+
+    endpoints: {
+      top:        "/api/top?limit=12",                 // ترند
+      movies:     (page=1, limit=12, type=null) => {   // جدیدترین‌ها
+        const params = new URLSearchParams({ page, limit });
+        if(type) params.set("type", type);
+        return "/api/movies?" + params.toString();
+      },
+      search:     (q, page=1, limit=20) => {
+        const params = new URLSearchParams({ q, page, limit });
+        return "/api/movies?" + params.toString();
+      },
+      content:    (code) => `/api/content/${encodeURIComponent(code)}`,
+      tree:       (code) => `/api/content/${encodeURIComponent(code)}/tree`,
+    },
+
+    headers(){
+      return { "Content-Type": "application/json" };
+    }
+  };
+
+
+      // اگر API نیاز به هدر/توکن داره اینجا اضافه کن:
+      headers(){
+        return {
+          "Content-Type": "application/json",
+          // "Authorization": "Bearer YOUR_TOKEN"
+        };
+      }
+    };
+
+    async function apiGet(path){
+      const r = await fetch(API.BASE_URL + path, { headers: API.headers() });
+      if(!r.ok) throw new Error("API GET Error: " + r.status);
+      return r.json();
+    }
+    async function apiPost(path, body){
+      const r = await fetch(API.BASE_URL + path, {
+        method:"POST",
+        headers: API.headers(),
+        body: JSON.stringify(body)
+      });
+      if(!r.ok) throw new Error("API POST Error: " + r.status);
+      return r.json();
+    }
+
+    /*************************************************
+     * 2) Telegram WebApp
+     *************************************************/
+    const tg = window.Telegram?.WebApp;
+    if(tg){
+      tg.ready();
+      tg.expand();
+      tg.setHeaderColor?.("#0f1014");
+      tg.setBackgroundColor?.("#0f1014");
+    }
+
+    // User box
+    const user = tg?.initDataUnsafe?.user;
+    const userNameEl = document.getElementById("userName");
+    const helloTextEl = document.getElementById("helloText");
+    const avatarEl = document.getElementById("avatar");
+
+    if(user){
+      const full = [user.first_name, user.last_name].filter(Boolean).join(" ");
+      userNameEl.textContent = full || ("@" + (user.username||"user"));
+      helloTextEl.textContent = "سلام 👋";
+      // اگر عکس پروفایل رو از API خودت می‌گیری، اینجا ست کن
+    }else{
+      userNameEl.textContent = "مهمان";
+      helloTextEl.textContent = "خوش اومدی 👋";
+    }
+
+    /*************************************************
+     * 3) Render helpers
+     *************************************************/
+    const chips = document.getElementById("chips");
+    const latestRail = document.getElementById("latestRail");
+    const trendRail  = document.getElementById("trendRail");
+
+    const hero = document.getElementById("hero");
+    const heroImg = document.getElementById("heroImg");
+    const heroTitle = document.getElementById("heroTitle");
+    const heroRate = document.getElementById("heroRate");
+    const heroDesc = document.getElementById("heroDesc");
+    const heroTags = document.getElementById("heroTags");
+
+    function safeText(s){ return (s ?? "").toString(); }
+
+    function cardTemplate(item){
+      const poster = item.poster || item.poster_url || item.image || "";
+      const year = (item.year || "").slice(0,4);
+      const sub  = year ? `سال ${year}` : "";
+
+      const sub    = item.subtitle || item.tagline || (item.cast ? item.cast : year);
+      return `
+        <div class="movie-card" data-id="${item.code}">
+          <img class="poster" src="${poster}" alt="${title}" loading="lazy" />
+          <div class="bookmark" data-bookmark="${item.id}">
+            <i class="bi bi-bookmark"></i>
+          </div>
+          <div class="meta">
+            <div class="name">${title}</div>
+            <div class="sub">${safeText(sub)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function setActiveChip(id){
+      [...document.querySelectorAll(".chip")].forEach(c => c.classList.remove("active"));
+      const el = document.querySelector(`.chip[data-id="${id}"]`);
+      if(el) el.classList.add("active");
+    }
+
+    function renderChips(list){
+      // همیشه "All"
+      const all = [{id:"all", name:"همه"}, ...list];
+      chips.innerHTML = all.map(c => `
+        <div class="chip ${c.id==="all"?"active":""}" data-id="${c.id}">${c.name}</div>
+      `).join("");
+
+      chips.addEventListener("click", async (e)=>{
+        const chip = e.target.closest(".chip");
+        if(!chip) return;
+        const id = chip.dataset.id;
+        setActiveChip(id);
+
+        // اگر API تو فیلتر دسته‌بندی داره، اینجا وصلش کن:
+        // مثلا: /movies/latest?genre=Action
+        // فعلاً فقط UI رو می‌زنیم
+        if(id !== "all"){
+          // نمونه‌ی فیلتر سمت فرانت (اگر item.genres داشته باشه)
+          filterRailsByCategory(chip.textContent.trim());
+        } else {
+          await loadRails(); // ریست
+        }
+      }, { once:true });
+    }
+
+    let cachedLatest = [];
+    let cachedTrending = [];
+
+    function filterRailsByCategory(name){
+      const norm = name.toLowerCase();
+      const f1 = cachedLatest.filter(x => (x.genres||x.genre||"").toString().toLowerCase().includes(norm));
+      const f2 = cachedTrending.filter(x => (x.genres||x.genre||"").toString().toLowerCase().includes(norm));
+      latestRail.innerHTML = (f1.length?f1:cachedLatest).slice(0,12).map(cardTemplate).join("");
+      trendRail.innerHTML  = (f2.length?f2:cachedTrending).slice(0,12).map(cardTemplate).join("");
+      bindCardClicks();
+    }
+
+    function renderRail(el, list){
+      el.innerHTML = list.slice(0,12).map(cardTemplate).join("");
+    }
+
+    function pickHero(item){
+      const poster = item.backdrop || item.backdrop_url || item.poster || item.poster_url || "";
+      heroImg.src = poster;
+      heroTitle.textContent = item.title || item.name || "—";
+      heroRate.textContent = (item.vote ?? item.vote ?? "—");
+      heroDesc.textContent = (item.overview ?? item.storyline ?? item.description ?? "").toString().trim() || "—";
+
+      const g = item.genres || item.genre || [];
+      const arr = Array.isArray(g) ? g : g.toString().split(",").map(s=>s.trim()).filter(Boolean);
+      heroTags.innerHTML = arr.slice(0,4).map(t => `<span class="tag">${t}</span>`).join("") || `<span class="tag">Action</span><span class="tag">Fantasy</span>`;
+      hero.style.display = "block";
+
+      hero.onclick = ()=> openMovie(item.id);
+    }
+
+    /*************************************************
+     * 4) Sheet (Movie Details)
+     *************************************************/
+    const sheetBackdrop = document.getElementById("sheetBackdrop");
+    const sheet = document.getElementById("sheet");
+    const sheetClose = document.getElementById("sheetClose");
+
+    const sheetTitle = document.getElementById("sheetTitle");
+    const sheetImg   = document.getElementById("sheetImg");
+    const sheetRate  = document.getElementById("sheetRate");
+    const sheetDesc  = document.getElementById("sheetDesc");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const watchlistBtn = document.getElementById("watchlistBtn");
+
+    function openSheet(){
+      sheetBackdrop.style.display = "block";
+      requestAnimationFrame(()=> sheet.classList.add("open"));
+    }
+    function closeSheet(){
+      sheet.classList.remove("open");
+      setTimeout(()=> sheetBackdrop.style.display="none", 220);
+    }
+    sheetBackdrop.addEventListener("click", closeSheet);
+    sheetClose.addEventListener("click", closeSheet);
+
+    async function openMovie(code){
+  try{
+    const d = await apiGet(API.endpoints.content(code));
+    const t = await apiGet(API.endpoints.tree(code)); // ✅ لینک‌ها اینجاست
+
+    sheetTitle.textContent = d.title || "—";
+    sheetRate.textContent  = (d.vote ?? "—");
+    sheetDesc.textContent  = (d.overview || "").trim() || "—";
+    sheetImg.src = d.poster || "";
+
+    // ✅ ساده‌ترین حالت: اگر تو tree یه url پیدا کنیم، همونو دانلود می‌کنیم
+    function findFirstUrl(nodes){
+      for(const n of (nodes||[])){
+        if(n.media_type === "url" && n.link) return n.link;
+        const inside = findFirstUrl(n.children);
+        if(inside) return inside;
+      }
+      return null;
+    }
+
+    const firstLink = findFirstUrl(t.tree);
+
+    downloadBtn.onclick = ()=>{
+      if(!firstLink){
+        alert("لینک دانلود توی tree پیدا نشد. (احتمالاً فقط folder داری)");
+        return;
+      }
+      if(tg?.openLink) tg.openLink(firstLink);
+      else window.open(firstLink, "_blank");
+    };
+
+    // فعلاً واچ‌لیست: لوکال
+    watchlistBtn.onclick = ()=>{
+      const key="nc_watchlist";
+      const arr = JSON.parse(localStorage.getItem(key)||"[]");
+      if(!arr.includes(code)) arr.push(code);
+      localStorage.setItem(key, JSON.stringify(arr));
+      watchlistBtn.innerHTML = '<i class="bi bi-check2"></i> اضافه شد';
+    };
+
+    openSheet();
+  }catch(err){
+    console.error(err);
+    alert("خطا در گرفتن اطلاعات فیلم از API");
+  }
+}
+
+
+    function bindCardClicks(){
+      // روی کارت -> باز کردن دیتیل
+      document.querySelectorAll(".movie-card").forEach(card=>{
+        card.onclick = (e)=>{
+          // اگر روی بوکمارک کلیک شد
+          if(e.target.closest("[data-bookmark]")){
+            const id = card.dataset.id;
+            // نمونه: اضافه به واچ‌لیست
+            apiPost(API.endpoints.watchlistAdd, { id }).catch(()=>{});
+            return;
+          }
+          openMovie(card.dataset.id);
+        };
+      });
+    }
+
+    /*************************************************
+     * 5) Search overlay
+     *************************************************/
+    const searchFab = document.getElementById("searchFab");
+    const searchWrap = document.getElementById("searchWrap");
+    const searchClose = document.getElementById("searchClose");
+    const searchInput = document.getElementById("searchInput");
+    const searchResults = document.getElementById("searchResults");
+
+    function openSearch(){
+      searchWrap.style.display = "block";
+      setTimeout(()=> searchInput.focus(), 50);
+    }
+    function closeSearch(){
+      searchWrap.style.display = "none";
+      searchInput.value = "";
+      searchResults.innerHTML = "";
+    }
+
+    searchFab.addEventListener("click", openSearch);
+    searchClose.addEventListener("click", closeSearch);
+    searchWrap.addEventListener("click", (e)=>{
+      if(e.target === searchWrap) closeSearch();
+    });
+
+    let searchTimer = null;
+    searchInput.addEventListener("input", ()=>{
+      clearTimeout(searchTimer);
+      const q = searchInput.value.trim();
+      if(q.length < 2){
+        searchResults.innerHTML = "";
+        return;
+      }
+      searchTimer = setTimeout(()=> runSearch(q), 250);
+    });
+
+    async function runSearch(q){
+  try{
+    const res = await apiGet(API.endpoints.search(q, 1, 20));
+    const list = res?.items || [];
+
+    searchResults.innerHTML = list.map(it => {
+      const year = (it.year || "").slice(0,4);
+      return `
+        <div class="result" data-id="${it.code}">
+          <img src="${it.poster || ""}" alt="">
+          <div style="min-width:0">
+            <div class="rname">${it.title || "—"}</div>
+            <div class="rsub">${year ? `سال ${year}` : ""} ${it.vote ? ` • IMDb ${it.vote}` : ""}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    searchResults.querySelectorAll(".result").forEach(r=>{
+      r.onclick = ()=>{
+        closeSearch();
+        openMovie(r.dataset.id); // ✅ code
+      };
+    });
+  }catch(err){
+    console.error(err);
+    searchResults.innerHTML = `<div style="color:rgba(255,255,255,.7);font-weight:800">نتیجه‌ای پیدا نشد یا خطای API</div>`;
+  }
+}
+
+    /*************************************************
+     * 6) Load data
+     *************************************************/
+    async function loadChips(){
+      try{
+        const cats = await apiGet(API.endpoints.categories);
+        renderChips(cats || []);
+      }catch(err){
+        console.error(err);
+        // اگر API دسته‌بندی نداره، ثابت بسازیم
+        renderChips([
+          {id:1,name:"Action"},
+          {id:2,name:"Comedy"},
+          {id:3,name:"Drama"},
+          {id:4,name:"Romance"},
+        ]);
+      }
+    }
+
+    async function loadRails(){
+  try{
+    const [topList, latestRes] = await Promise.all([
+      apiGet(API.endpoints.top),
+      apiGet(API.endpoints.movies(1, 12, null)),
+    ]);
+
+    cachedTrending = topList || [];
+    cachedLatest = (latestRes?.items) || [];
+
+    renderRail(latestRail, cachedLatest);
+    renderRail(trendRail, cachedTrending);
+
+    const heroItem = cachedTrending?.[0] || cachedLatest?.[0];
+    if(heroItem) pickHero(heroItem);
+
+    bindCardClicks();
+  }catch(err){
+    console.error(err);
+    latestRail.innerHTML = `<div style="color:rgba(255,255,255,.65);font-weight:800">خطا در دریافت جدیدترین‌ها</div>`;
+    trendRail.innerHTML  = `<div style="color:rgba(255,255,255,.65);font-weight:800">خطا در دریافت ترندها</div>`;
+  }
+}
+
+
+    // Nav tabs (فعلاً فقط UI)
+    document.querySelectorAll(".nav-item").forEach(item=>{
+      item.addEventListener("click", ()=>{
+        document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
+        item.classList.add("active");
+
+        const tab = item.dataset.tab;
+        if(tab === "watchlist"){
+          // اگر خواستی صفحه جدا بسازی، اینجا route کن
+          tg?.showPopup?.({title:"واچ‌لیست", message:"این بخش رو هم می‌تونیم مثل عکس بسازیم.", buttons:[{type:"ok"}]});
+        }
+      });
+    });
+
+    // init
+    (async function init(){
+      await loadChips();
+      await loadRails();
+    })();
+  </script>
 </body>
 </html>
