@@ -1,988 +1,283 @@
-<!doctype html>
-<html lang="fa" dir="rtl">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <title>NightCut MiniApp</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NightCut WebApp</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: {
+                            bg: "#0B0C15",
+                            card: "#15161E",
+                            input: "#1E1F2B",
+                            primary: "#6C47FF",
+                            secondary: "#00C2FF",
+                        }
+                    },
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body { background-color: #0B0C15; color: white; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-nav {
+            background: rgba(11, 12, 21, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+    </style>
 
-  <!-- Telegram WebApp -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;800&display=swap" rel="stylesheet">
-
-  <!-- Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
-  <style>
-    :root{
-      --bg:#0f1014;
-      --card:#15161a;
-      --card2:#1a1b1f;
-      --text:#ffffff;
-      --muted:#9aa0aa;
-      --line: rgba(255,255,255,0.07);
-      --accent:#a855f7; /* بنفش */
-      --accent2:#7c3aed;
-      --shadow: 0 12px 40px rgba(0,0,0,.55);
-      --radius: 18px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: "Vazirmatn", system-ui, sans-serif;
-      background:
-        radial-gradient(900px 500px at 15% -10%, rgba(168,85,247,.22), transparent 60%),
-        radial-gradient(700px 420px at 90% 5%, rgba(124,58,237,.18), transparent 55%),
-        var(--bg);
-      color:var(--text);
-      overflow-x:hidden;
-    }
-    a{color:inherit;text-decoration:none}
-    .app{
-      max-width: 430px;
-      margin:0 auto;
-      min-height:100vh;
-      padding: 14px 14px 92px;
-    }
-
-    /* Top bar */
-    .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-top:6px;
-      margin-bottom:14px;
-    }
-    .userbox{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      min-width:0;
-    }
-    .avatar{
-      width:40px;height:40px;border-radius:999px;
-      background: linear-gradient(135deg, rgba(168,85,247,.35), rgba(124,58,237,.15));
-      border:1px solid rgba(255,255,255,.12);
-      display:flex;align-items:center;justify-content:center;
-      box-shadow: var(--shadow);
-      overflow:hidden;
-      flex:0 0 auto;
-    }
-    .avatar img{width:100%;height:100%;object-fit:cover}
-    .hello{
-      display:flex;flex-direction:column;
-      min-width:0;
-    }
-    .hello .t1{
-      font-weight:700;font-size:13px;color:rgba(255,255,255,.85)
-    }
-    .hello .t2{
-      font-weight:800;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-    }
-    .top-actions{
-      display:flex;align-items:center;gap:10px;
-    }
-    .iconbtn{
-      width:40px;height:40px;border-radius:14px;
-      background: rgba(255,255,255,.06);
-      border: 1px solid rgba(255,255,255,.08);
-      display:flex;align-items:center;justify-content:center;
-      box-shadow: 0 6px 20px rgba(0,0,0,.35);
-      cursor:pointer;
-    }
-    .iconbtn:active{transform:scale(.98)}
-    .iconbtn i{font-size:18px;color:rgba(255,255,255,.9)}
-
-    /* Section */
-    .section{margin-top:14px}
-    .section-head{
-      display:flex;align-items:center;justify-content:space-between;
-      margin: 6px 2px 10px;
-    }
-    .section-title{
-      font-weight:900;font-size:16px;
-      letter-spacing:-.2px;
-    }
-    .seeall{
-      font-size:12px;color:rgba(255,255,255,.65);
-      cursor:pointer;
-    }
-
-    /* Chips (categories) */
-    .chips{
-      display:flex;
-      gap:10px;
-      overflow:auto;
-      padding: 2px 2px 6px;
-      scrollbar-width:none;
-    }
-    .chips::-webkit-scrollbar{display:none}
-    .chip{
-      flex:0 0 auto;
-      padding: 9px 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08);
-      color: rgba(255,255,255,.78);
-      font-weight:700;
-      font-size:12px;
-      cursor:pointer;
-      transition:.2s;
-      user-select:none;
-    }
-    .chip.active{
-      background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(124,58,237,.85));
-      border-color: rgba(255,255,255,.12);
-      color:#fff;
-      box-shadow: 0 10px 30px rgba(168,85,247,.25);
-    }
-
-    /* Horizontal card rail */
-    .rail{
-      display:flex;
-      gap:12px;
-      overflow:auto;
-      padding: 4px 2px 12px;
-      scrollbar-width:none;
-    }
-    .rail::-webkit-scrollbar{display:none}
-
-    .movie-card{
-      width: 130px;
-      flex: 0 0 auto;
-      border-radius: 20px;
-      background: rgba(255,255,255,.04);
-      border: 1px solid rgba(255,255,255,.08);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      overflow:hidden;
-      cursor:pointer;
-      position:relative;
-    }
-    .movie-card .poster{
-      width:100%;
-      height: 175px;
-      background:#222;
-      display:block;
-      object-fit:cover;
-    }
-    .movie-card .meta{
-      padding: 10px 10px 12px;
-    }
-    .movie-card .name{
-      font-weight:900;
-      font-size:13px;
-      line-height:1.2;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-    .movie-card .sub{
-      margin-top:4px;
-      font-size:11px;
-      color: rgba(255,255,255,.62);
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-    .bookmark{
-      position:absolute;
-      top:10px; left:10px;
-      width:34px;height:34px;border-radius:14px;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(255,255,255,.14);
-      display:flex;align-items:center;justify-content:center;
-      backdrop-filter: blur(10px);
-      cursor:pointer;
-    }
-    .bookmark i{font-size:16px;color:#fff;opacity:.9}
-
-    /* Hero (featured) */
-    .hero{
-      border-radius: 26px;
-      overflow:hidden;
-      position:relative;
-      height: 330px;
-      border:1px solid rgba(255,255,255,.10);
-      box-shadow: var(--shadow);
-      background: #111;
-    }
-    .hero img{
-      width:100%;height:100%;object-fit:cover;display:block;
-      filter: contrast(1.05) saturate(1.05);
-    }
-    .hero::after{
-      content:"";
-      position:absolute;inset:0;
-      background:
-        linear-gradient(0deg, rgba(15,16,20,1) 0%, rgba(15,16,20,.15) 55%, rgba(15,16,20,.05) 100%),
-        radial-gradient(900px 450px at 20% 0%, rgba(168,85,247,.25), transparent 60%);
-    }
-    .hero-overlay{
-      position:absolute;
-      inset:auto 0 0 0;
-      padding: 14px 14px 16px;
-      z-index:2;
-    }
-    .tags{
-      display:flex;gap:8px;flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .tag{
-      padding:7px 12px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:700;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.08);
-      color: rgba(255,255,255,.78);
-    }
-    .hero-title{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-    }
-    .hero-title h2{
-      margin:0;
-      font-size:18px;
-      font-weight:950;
-      letter-spacing:-.3px;
-      line-height:1.2;
-      max-width:72%;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-    .imdb{
-      display:flex;align-items:center;gap:8px;
-      background: rgba(0,0,0,.35);
-      border:1px solid rgba(255,255,255,.14);
-      padding:7px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-      backdrop-filter: blur(10px);
-      flex:0 0 auto;
-    }
-    .imdb .badge{
-      background: #facc15;
-      color:#111;
-      border-radius: 999px;
-      padding:2px 8px;
-      font-weight:1000;
-      font-size:11px;
-    }
-    .imdb .star{color:#facc15}
-
-    .hero-desc{
-      margin-top:10px;
-      color: rgba(255,255,255,.72);
-      font-size:12px;
-      line-height:1.55;
-      max-height: 56px;
-      overflow:hidden;
-    }
-
-    /* Bottom nav */
-    .bottom{
-      position: fixed;
-      right:0;left:0;bottom:0;
-      padding: 12px 0 18px;
-      display:flex;
-      justify-content:center;
-      z-index:50;
-    }
-    .nav{
-      width:min(430px, calc(100% - 26px));
-      background: rgba(21,22,26,.78);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 26px;
-      padding: 12px 14px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      backdrop-filter: blur(18px);
-      box-shadow: 0 14px 40px rgba(0,0,0,.6);
-      position:relative;
-    }
-    .nav-item{
-      width:64px;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      gap:6px;
-      color: rgba(255,255,255,.65);
-      font-size:10px;
-      font-weight:800;
-      cursor:pointer;
-      user-select:none;
-    }
-    .nav-item i{font-size:18px}
-    .nav-item.active{color:#fff}
-    .nav-item.active i{color: #fff}
-
-    .fab{
-      width:56px;height:56px;border-radius: 20px;
-      background: radial-gradient(70% 70% at 30% 30%, rgba(255,255,255,.20), transparent 55%),
-                  linear-gradient(135deg, rgba(168,85,247,1), rgba(124,58,237,1));
-      box-shadow: 0 18px 40px rgba(168,85,247,.32);
-      border:1px solid rgba(255,255,255,.14);
-      display:flex;align-items:center;justify-content:center;
-      position:absolute;
-      top:-18px;
-      left:50%;
-      transform:translateX(-50%);
-      cursor:pointer;
-    }
-    .fab i{font-size:22px;color:#fff}
-
-    /* Drawer / Modal (Movie details) */
-    .sheet-backdrop{
-      position:fixed;inset:0;
-      background: rgba(0,0,0,.55);
-      display:none;
-      z-index:100;
-    }
-    .sheet{
-      position:fixed;
-      right:0;left:0;bottom:-100%;
-      margin:0 auto;
-      width:min(430px, 100%);
-      background: rgba(21,22,26,.92);
-      border: 1px solid rgba(255,255,255,.10);
-      border-radius: 26px 26px 0 0;
-      box-shadow: 0 24px 60px rgba(0,0,0,.75);
-      backdrop-filter: blur(18px);
-      padding: 14px 14px 18px;
-      z-index:101;
-      transition: .28s ease;
-    }
-    .sheet.open{bottom:0}
-    .sheet-head{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      margin-bottom:10px;
-    }
-    .sheet-head .grab{
-      width: 70px;height:5px;border-radius:999px;
-      background: rgba(255,255,255,.18);
-      margin: 2px auto 10px;
-    }
-    .sheet-title{
-      font-weight:950;font-size:16px;
-      margin: 2px 0 6px;
-    }
-    .sheet-row{
-      display:flex;gap:12px;align-items:flex-start;
-    }
-    .sheet-poster{
-      width:110px;height:150px;border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      overflow:hidden;flex:0 0 auto;
-      background:#111;
-    }
-    .sheet-poster img{width:100%;height:100%;object-fit:cover}
-    .sheet-info{flex:1;min-width:0}
-    .mini{
-      color:rgba(255,255,255,.7);
-      font-size:12px;line-height:1.6;
-      max-height: 95px; overflow:auto;
-      padding-right:2px;
-    }
-    .actions{
-      display:flex;gap:10px;margin-top:12px;
-    }
-    .btn{
-      flex:1;
-      border-radius: 16px;
-      padding: 12px 12px;
-      font-weight:950;
-      font-size:13px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color:#fff;
-      cursor:pointer;
-    }
-    .btn.primary{
-      background: linear-gradient(135deg, rgba(168,85,247,1), rgba(124,58,237,1));
-      box-shadow: 0 14px 30px rgba(168,85,247,.22);
-    }
-
-    /* Search overlay */
-    .search-wrap{
-      position: fixed; inset:0;
-      display:none;
-      z-index:120;
-      background: rgba(0,0,0,.65);
-      backdrop-filter: blur(10px);
-      padding: 14px;
-    }
-    .search-box{
-      max-width:430px;margin: 0 auto;
-      background: rgba(21,22,26,.92);
-      border:1px solid rgba(255,255,255,.10);
-      border-radius: 22px;
-      padding: 12px;
-      box-shadow: var(--shadow);
-    }
-    .search-top{
-      display:flex;gap:10px;align-items:center;
-    }
-    .input{
-      flex:1;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      color:#fff;
-      border-radius: 16px;
-      padding: 12px 12px;
-      font-family: inherit;
-      font-weight:700;
-      outline:none;
-    }
-    .close{
-      width:44px;height:44px;border-radius:16px;
-      background: rgba(255,255,255,.06);
-      border:1px solid rgba(255,255,255,.10);
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;
-    }
-    .close i{font-size:20px}
-    .search-results{
-      margin-top:12px;
-      display:flex;flex-direction:column;gap:10px;
-      max-height: 65vh;
-      overflow:auto;
-    }
-    .result{
-      display:flex;gap:12px;align-items:center;
-      padding:10px;
-      border-radius: 18px;
-      background: rgba(255,255,255,.04);
-      border:1px solid rgba(255,255,255,.08);
-      cursor:pointer;
-    }
-    .result img{
-      width:52px;height:70px;border-radius:14px;object-fit:cover;
-      border:1px solid rgba(255,255,255,.10);
-    }
-    .result .rname{font-weight:950;font-size:13px;margin-bottom:4px}
-    .result .rsub{font-size:11px;color:rgba(255,255,255,.65)}
-  </style>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/react-router-dom@6/umd/react-router-dom.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
 <body>
-  <div class="app">
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="userbox">
-        <div class="avatar" id="avatar">
-          <i class="bi bi-person-fill"></i>
-        </div>
-        <div class="hello">
-          <div class="t1" id="helloText">سلام 👋</div>
-          <div class="t2" id="userName">کاربر</div>
-        </div>
-      </div>
 
-      <div class="top-actions">
-        <div class="iconbtn" id="notifBtn" title="اعلان‌ها"><i class="bi bi-bell"></i></div>
-        <div class="iconbtn" id="menuBtn" title="منو"><i class="bi bi-list"></i></div>
-      </div>
-    </div>
+    <div id="root"></div>
 
-    <!-- Featured / Hero -->
-    <div class="hero" id="hero" style="display:none">
-      <img id="heroImg" alt="featured"/>
-      <div class="hero-overlay">
-        <div class="tags" id="heroTags"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { HashRouter, Routes, Route, Link, useNavigate, useParams, NavLink, useLocation } = ReactRouterDOM;
 
-        <div class="hero-title">
-          <h2 id="heroTitle">—</h2>
-          <div class="imdb">
-            <span class="badge">IMDb</span>
-            <span class="star">★</span>
-            <span id="heroRate">—</span>
-          </div>
-        </div>
+        // --- CONFIGURATION ---
+        const queryParams = new URLSearchParams(window.location.search);
+        // آدرس API خودت رو اینجا چک کن
+        const BASE_URL = queryParams.get('api') || 'http://localhost:8000'; 
+        const api = axios.create({ baseURL: BASE_URL });
 
-        <div class="hero-desc" id="heroDesc"></div>
-      </div>
-    </div>
+        // --- ICONS (SVG Components) ---
+        const IconStar = () => <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>;
+        const IconHome = ({size=24, color="currentColor"}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>;
+        const IconSearch = ({size=24, color="currentColor"}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
+        const IconHeart = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path></svg>;
+        const IconUser = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+        const IconCompass = ({size=24}) => <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>;
+        const IconBack = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>;
+        const IconPlay = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+        const IconDownload = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>;
+        const IconFolder = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 2H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"></path></svg>;
+        const IconFile = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>;
+        const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>;
 
-    <!-- Categories -->
-    <div class="section">
-      <div class="section-head">
-        <div class="section-title">دسته‌بندی‌ها</div>
-        <div class="seeall" id="catAllBtn">مشاهده همه</div>
-      </div>
-      <div class="chips" id="chips"></div>
-    </div>
+        // --- COMPONENTS ---
 
-    <!-- Latest -->
-    <div class="section">
-      <div class="section-head">
-        <div class="section-title">جدیدترین‌ها</div>
-        <div class="seeall" id="latestAllBtn">مشاهده همه</div>
-      </div>
-      <div class="rail" id="latestRail"></div>
-    </div>
+        const MovieCard = ({ movie }) => (
+            <Link to={`/detail/${movie.code}`} className="flex-shrink-0 w-[140px] snap-start">
+                <div className="relative aspect-[2/3] rounded-2xl overflow-hidden mb-2 bg-dark-card border border-white/5">
+                    <img src={movie.poster} alt={movie.title} className="w-full h-full object-cover" loading="lazy" />
+                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-1.5 py-0.5 rounded-md flex items-center gap-1">
+                        <IconStar />
+                        <span className="text-[10px] font-bold text-white">{movie.vote}</span>
+                    </div>
+                </div>
+                <h3 className="text-white font-medium text-sm truncate">{movie.title}</h3>
+                <p className="text-gray-400 text-[10px]">{movie.year.split('-')[0]} • {movie.type === 'movie' ? 'Movie' : 'Series'}</p>
+            </Link>
+        );
 
-    <!-- Trending -->
-    <div class="section">
-      <div class="section-head">
-        <div class="section-title">ترند این روزها</div>
-        <div class="seeall" id="trendAllBtn">مشاهده همه</div>
-      </div>
-      <div class="rail" id="trendRail"></div>
-    </div>
-  </div>
+        const BottomNav = () => (
+            <div className="fixed bottom-0 left-0 right-0 h-20 glass-nav z-50 px-6 pb-4 pt-2">
+                <div className="flex justify-between items-center h-full max-w-md mx-auto">
+                    <NavLink to="/" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconHome /></div></NavLink>
+                    <NavLink to="/explore" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconCompass /></div></NavLink>
+                    <div className="w-12 h-12 bg-gradient-to-tr from-dark-primary to-dark-secondary rounded-full flex items-center justify-center shadow-lg -mt-6 border-4 border-[#0B0C15]">
+                        <IconSearch color="white" />
+                    </div>
+                    <NavLink to="/watchlist" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconHeart /></div></NavLink>
+                    <NavLink to="/profile" className={({isActive}) => isActive ? "text-dark-primary" : "text-gray-500"}><div className="flex flex-col items-center"><IconUser /></div></NavLink>
+                </div>
+            </div>
+        );
 
-  <!-- Bottom Nav -->
-  <div class="bottom">
-    <div class="nav">
-      <div class="nav-item active" data-tab="home"><i class="bi bi-house-door"></i><div>خانه</div></div>
-      <div class="nav-item" data-tab="categories"><i class="bi bi-grid"></i><div>دسته‌ها</div></div>
+        const DownloadSheet = ({ tree, onClose, title }) => {
+            const [currentNode, setCurrentNode] = useState(tree);
+            const [history, setHistory] = useState([]);
+            const [headerTitle, setHeaderTitle] = useState("Select File");
 
-      <div class="fab" id="searchFab" title="جستجو"><i class="bi bi-search"></i></div>
+            const handleNodeClick = (node) => {
+                if (node.media_type === 'folder') {
+                    setHistory([...history, { nodes: currentNode, title: headerTitle }]);
+                    setCurrentNode(node.children);
+                    setHeaderTitle(node.text);
+                } else {
+                    const tg = window.Telegram?.WebApp;
+                    if (tg) {
+                        tg.sendData(`GET:${node.id}`);
+                        tg.close();
+                    } else {
+                        alert(`Telegram Data: GET:${node.id} (Sent!)`);
+                    }
+                }
+            };
 
-      <div class="nav-item" data-tab="watchlist"><i class="bi bi-bookmark"></i><div>واچ‌لیست</div></div>
-      <div class="nav-item" data-tab="profile"><i class="bi bi-person"></i><div>پروفایل</div></div>
-    </div>
-  </div>
+            const handleBack = () => {
+                if (history.length === 0) return;
+                const prev = history[history.length - 1];
+                setCurrentNode(prev.nodes);
+                setHeaderTitle(prev.title);
+                setHistory(history.slice(0, -1));
+            };
 
-  <!-- Movie Sheet -->
-  <div class="sheet-backdrop" id="sheetBackdrop"></div>
-  <div class="sheet" id="sheet">
-    <div class="sheet-head">
-      <div style="width:44px"></div>
-      <div class="grab"></div>
-      <div class="iconbtn" id="sheetClose" style="width:44px;height:44px;border-radius:16px;background:rgba(255,255,255,.06)">
-        <i class="bi bi-x-lg"></i>
-      </div>
-    </div>
-
-    <div class="sheet-title" id="sheetTitle">—</div>
-    <div class="sheet-row">
-      <div class="sheet-poster"><img id="sheetImg" alt="poster"></div>
-      <div class="sheet-info">
-        <div class="imdb" style="display:inline-flex;margin-bottom:10px">
-          <span class="badge">IMDb</span>
-          <span class="star">★</span>
-          <span id="sheetRate">—</span>
-        </div>
-        <div class="mini" id="sheetDesc"></div>
-
-        <div class="actions">
-          <button class="btn primary" id="downloadBtn"><i class="bi bi-download"></i> دانلود</button>
-          <button class="btn" id="watchlistBtn"><i class="bi bi-bookmark-plus"></i> واچ‌لیست</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Search -->
-  <div class="search-wrap" id="searchWrap">
-    <div class="search-box">
-      <div class="search-top">
-        <input class="input" id="searchInput" placeholder="اسم فیلم/سریال رو بنویس..." />
-        <div class="close" id="searchClose"><i class="bi bi-x-lg"></i></div>
-      </div>
-      <div class="search-results" id="searchResults"></div>
-    </div>
-  </div>
-
-  <script>
-    /*************************************************
-     * 1) تنظیم API (فقط این بخش رو با API خودت ست کن)
-     *************************************************/
-    const API = {
-  BASE_URL: "https://YOUR_DOMAIN_OR_IP", // مثلا: http://127.0.0.1:8000
-
-  endpoints: {
-    top: "/api/top?limit=12",
-    movies: (page=1, limit=12, type=null) => {
-      const params = new URLSearchParams({ page, limit });
-      if(type) params.set("type", type);
-      return "/api/movies?" + params.toString();
-    },
-    search: (q, page=1, limit=20) => {
-      const params = new URLSearchParams({ q, page, limit });
-      return "/api/movies?" + params.toString();
-    },
-    content: (code) => `/api/content/${encodeURIComponent(code)}`,
-    tree: (code) => `/api/content/${encodeURIComponent(code)}/tree`,
-  },
-
-  headers(){
-    return { "Content-Type": "application/json" };
-  }
-};
-
-
-    async function apiGet(path){
-      const r = await fetch(API.BASE_URL + path, { headers: API.headers() });
-      if(!r.ok) throw new Error("API GET Error: " + r.status);
-      return r.json();
-    }
-    async function apiPost(path, body){
-      const r = await fetch(API.BASE_URL + path, {
-        method:"POST",
-        headers: API.headers(),
-        body: JSON.stringify(body)
-      });
-      if(!r.ok) throw new Error("API POST Error: " + r.status);
-      return r.json();
-    }
-
-    /*************************************************
-     * 2) Telegram WebApp
-     *************************************************/
-    const tg = window.Telegram?.WebApp;
-    if(tg){
-      tg.ready();
-      tg.expand();
-      tg.setHeaderColor?.("#0f1014");
-      tg.setBackgroundColor?.("#0f1014");
-    }
-
-    // User box
-    const user = tg?.initDataUnsafe?.user;
-    const userNameEl = document.getElementById("userName");
-    const helloTextEl = document.getElementById("helloText");
-    const avatarEl = document.getElementById("avatar");
-
-    if(user){
-      const full = [user.first_name, user.last_name].filter(Boolean).join(" ");
-      userNameEl.textContent = full || ("@" + (user.username||"user"));
-      helloTextEl.textContent = "سلام 👋";
-      // اگر عکس پروفایل رو از API خودت می‌گیری، اینجا ست کن
-    }else{
-      userNameEl.textContent = "مهمان";
-      helloTextEl.textContent = "خوش اومدی 👋";
-    }
-
-    /*************************************************
-     * 3) Render helpers
-     *************************************************/
-    const chips = document.getElementById("chips");
-    const latestRail = document.getElementById("latestRail");
-    const trendRail  = document.getElementById("trendRail");
-
-    const hero = document.getElementById("hero");
-    const heroImg = document.getElementById("heroImg");
-    const heroTitle = document.getElementById("heroTitle");
-    const heroRate = document.getElementById("heroRate");
-    const heroDesc = document.getElementById("heroDesc");
-    const heroTags = document.getElementById("heroTags");
-
-    function safeText(s){ return (s ?? "").toString(); }
-
-    function cardTemplate(item){
-  const poster = item.poster || "";
-  const title  = item.title  || "—";
-  const year   = (item.year || "").slice(0,4);
-  const sub    = year ? `سال ${year}` : "";
-
-  return `
-    <div class="movie-card" data-id="${item.code}">
-      <img class="poster" src="${poster}" alt="${title}" loading="lazy" />
-      <div class="bookmark" data-bookmark="${item.code}">
-        <i class="bi bi-bookmark"></i>
-      </div>
-      <div class="meta">
-        <div class="name">${title}</div>
-        <div class="sub">${safeText(sub)}</div>
-      </div>
-    </div>
-  `;
-}
-
-    function setActiveChip(id){
-      [...document.querySelectorAll(".chip")].forEach(c => c.classList.remove("active"));
-      const el = document.querySelector(`.chip[data-id="${id}"]`);
-      if(el) el.classList.add("active");
-    }
-
-    function renderChips(list){
-      // همیشه "All"
-      const all = [{id:"all", name:"همه"}, ...list];
-      chips.innerHTML = all.map(c => `
-        <div class="chip ${c.id==="all"?"active":""}" data-id="${c.id}">${c.name}</div>
-      `).join("");
-
-      chips.addEventListener("click", async (e)=>{
-        const chip = e.target.closest(".chip");
-        if(!chip) return;
-        const id = chip.dataset.id;
-        setActiveChip(id);
-
-        // اگر API تو فیلتر دسته‌بندی داره، اینجا وصلش کن:
-        // مثلا: /movies/latest?genre=Action
-        // فعلاً فقط UI رو می‌زنیم
-        if(id !== "all"){
-          // به جای فیلتر فرانت:
-          await loadRails(id); 
-        } else {
-          await loadRails(null);
-        }
-      }, { once:true });
-    }
-
-    let cachedLatest = [];
-    let cachedTrending = [];
-
-    function filterRailsByCategory(name){
-      const norm = name.toLowerCase();
-      const f1 = cachedLatest.filter(x => (x.genres||x.genre||"").toString().toLowerCase().includes(norm));
-      const f2 = cachedTrending.filter(x => (x.genres||x.genre||"").toString().toLowerCase().includes(norm));
-      latestRail.innerHTML = (f1.length?f1:cachedLatest).slice(0,12).map(cardTemplate).join("");
-      trendRail.innerHTML  = (f2.length?f2:cachedTrending).slice(0,12).map(cardTemplate).join("");
-      bindCardClicks();
-    }
-
-    function renderRail(el, list){
-      el.innerHTML = list.slice(0,12).map(cardTemplate).join("");
-    }
-
-    function pickHero(item){
-      const poster = item.backdrop || item.backdrop_url || item.poster || item.poster_url || "";
-      heroImg.src = poster;
-      heroTitle.textContent = item.title || item.name || "—";
-      heroRate.textContent = (item.vote ?? "—");
-      heroDesc.textContent = (item.overview ?? item.storyline ?? item.description ?? "").toString().trim() || "—";
-
-      const g = item.genres || item.genre || [];
-      const arr = Array.isArray(g) ? g : g.toString().split(",").map(s=>s.trim()).filter(Boolean);
-      heroTags.innerHTML = arr.slice(0,4).map(t => `<span class="tag">${t}</span>`).join("") || `<span class="tag">Action</span><span class="tag">Fantasy</span>`;
-      hero.style.display = "block";
-
-      hero.onclick = ()=> openMovie(item.code);
-
-    }
-
-    /*************************************************
-     * 4) Sheet (Movie Details)
-     *************************************************/
-    const sheetBackdrop = document.getElementById("sheetBackdrop");
-    const sheet = document.getElementById("sheet");
-    const sheetClose = document.getElementById("sheetClose");
-
-    const sheetTitle = document.getElementById("sheetTitle");
-    const sheetImg   = document.getElementById("sheetImg");
-    const sheetRate  = document.getElementById("sheetRate");
-    const sheetDesc  = document.getElementById("sheetDesc");
-    const downloadBtn = document.getElementById("downloadBtn");
-    const watchlistBtn = document.getElementById("watchlistBtn");
-
-    function openSheet(){
-      sheetBackdrop.style.display = "block";
-      requestAnimationFrame(()=> sheet.classList.add("open"));
-    }
-    function closeSheet(){
-      sheet.classList.remove("open");
-      setTimeout(()=> sheetBackdrop.style.display="none", 220);
-    }
-    sheetBackdrop.addEventListener("click", closeSheet);
-    sheetClose.addEventListener("click", closeSheet);
-
-    async function openMovie(code){
-  try{
-    const d = await apiGet(API.endpoints.content(code));
-    const t = await apiGet(API.endpoints.tree(code)); // ✅ لینک‌ها اینجاست
-
-    sheetTitle.textContent = d.title || "—";
-    sheetRate.textContent  = (d.vote ?? "—");
-    sheetDesc.textContent  = (d.overview || "").trim() || "—";
-    sheetImg.src = d.poster || "";
-
-    // ✅ ساده‌ترین حالت: اگر تو tree یه url پیدا کنیم، همونو دانلود می‌کنیم
-    function findFirstUrl(nodes){
-      for(const n of (nodes||[])){
-        if(n.media_type === "url" && n.link) return n.link;
-        const inside = findFirstUrl(n.children);
-        if(inside) return inside;
-      }
-      return null;
-    }
-
-    const firstLink = findFirstUrl(t.tree);
-
-    downloadBtn.onclick = ()=>{
-      if(!firstLink){
-        alert("لینک دانلود توی tree پیدا نشد. (احتمالاً فقط folder داری)");
-        return;
-      }
-      if(tg?.openLink) tg.openLink(firstLink);
-      else window.open(firstLink, "_blank");
-    };
-
-    // فعلاً واچ‌لیست: لوکال
-    watchlistBtn.onclick = ()=>{
-      const key="nc_watchlist";
-      const arr = JSON.parse(localStorage.getItem(key)||"[]");
-      if(!arr.includes(code)) arr.push(code);
-      localStorage.setItem(key, JSON.stringify(arr));
-      watchlistBtn.innerHTML = '<i class="bi bi-check2"></i> اضافه شد';
-    };
-
-    openSheet();
-  }catch(err){
-    console.error(err);
-    alert("خطا در گرفتن اطلاعات فیلم از API");
-  }
-}
-
-
-    function bindCardClicks(){
-      // روی کارت -> باز کردن دیتیل
-      document.querySelectorAll(".movie-card").forEach(card=>{
-        card.onclick = (e)=>{
-          // اگر روی بوکمارک کلیک شد
-          if(e.target.closest("[data-bookmark]")){
-            const id = card.dataset.id;
-            // نمونه: اضافه به واچ‌لیست
-            if(e.target.closest("[data-bookmark]")){
-            const code = card.dataset.id;
-            const key="nc_watchlist";
-            const arr = JSON.parse(localStorage.getItem(key)||"[]");
-            if(!arr.includes(code)) arr.push(code);
-            localStorage.setItem(key, JSON.stringify(arr));
-            return;
-          }
-
-            return;
-          }
-          openMovie(card.dataset.id);
+            return (
+                <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/80 backdrop-blur-sm animate-in fade-in">
+                    <div className="bg-[#15161E] w-full max-w-md rounded-t-3xl p-6 min-h-[50vh] max-h-[85vh] flex flex-col shadow-2xl border-t border-white/10">
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-3">
+                                {history.length > 0 && <button onClick={handleBack} className="text-gray-400 text-sm">Back</button>}
+                                <h3 className="text-xl font-bold text-white truncate max-w-[200px]">{headerTitle}</h3>
+                            </div>
+                            <button onClick={onClose} className="bg-dark-input p-2 rounded-full"><IconX /></button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto no-scrollbar space-y-3">
+                            {currentNode.map((node) => (
+                                <button key={node.id} onClick={() => handleNodeClick(node)} className="w-full flex items-center gap-4 p-4 bg-dark-bg/50 rounded-xl hover:bg-dark-bg border border-white/5 transition-all active:scale-95 text-left">
+                                    <div className={`p-3 rounded-full ${node.media_type === 'folder' ? 'bg-blue-500/10 text-blue-400' : 'bg-green-500/10 text-green-400'}`}>
+                                        {node.media_type === 'folder' ? <IconFolder /> : <IconFile />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="font-medium text-white">{node.text}</p>
+                                        {node.media_type !== 'folder' && <p className="text-xs text-gray-500">Tap to receive</p>}
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
         };
-      });
-    }
 
-    /*************************************************
-     * 5) Search overlay
-     *************************************************/
-    const searchFab = document.getElementById("searchFab");
-    const searchWrap = document.getElementById("searchWrap");
-    const searchClose = document.getElementById("searchClose");
-    const searchInput = document.getElementById("searchInput");
-    const searchResults = document.getElementById("searchResults");
+        // --- PAGES ---
 
-    function openSearch(){
-      searchWrap.style.display = "block";
-      setTimeout(()=> searchInput.focus(), 50);
-    }
-    function closeSearch(){
-      searchWrap.style.display = "none";
-      searchInput.value = "";
-      searchResults.innerHTML = "";
-    }
+        const HomePage = () => {
+            const [topMovies, setTopMovies] = useState([]);
+            const [latestMovies, setLatestMovies] = useState([]);
 
-    searchFab.addEventListener("click", openSearch);
-    searchClose.addEventListener("click", closeSearch);
-    searchWrap.addEventListener("click", (e)=>{
-      if(e.target === searchWrap) closeSearch();
-    });
+            useEffect(() => {
+                const tg = window.Telegram?.WebApp;
+                if(tg) { tg.ready(); tg.expand(); tg.setHeaderColor('#0B0C15'); tg.setBackgroundColor('#0B0C15'); }
+                
+                // MOCK DATA for Demo (Because API might not be running locally for you)
+                // In real usage, uncomment axios below
+                /*
+                api.get('/api/top').then(res => setTopMovies(res.data));
+                api.get('/api/movies?page=1').then(res => setLatestMovies(res.data.items));
+                */
+               // DEMO DATA:
+               setTopMovies([
+                   {id:1, code:'test', title:'Oppenheimer', poster:'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', vote:8.1, year:'2023', type:'movie'},
+                   {id:2, code:'test', title:'Barbie', poster:'https://image.tmdb.org/t/p/w500/iuFNMS8U5cb6xfzi51Dbkovj7vM.jpg', vote:7.2, year:'2023', type:'movie'},
+               ]);
+               setLatestMovies([
+                   {id:3, code:'test', title:'Breaking Bad', poster:'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg', vote:9.5, year:'2008', type:'series'},
+                   {id:4, code:'test', title:'Inception', poster:'https://image.tmdb.org/t/p/w500/oYuLEt3zVCKqJCZVnBNmBDXLsjC.jpg', vote:8.8, year:'2010', type:'movie'},
+               ]);
 
-    let searchTimer = null;
-    searchInput.addEventListener("input", ()=>{
-      clearTimeout(searchTimer);
-      const q = searchInput.value.trim();
-      if(q.length < 2){
-        searchResults.innerHTML = "";
-        return;
-      }
-      searchTimer = setTimeout(()=> runSearch(q), 250);
-    });
+            }, []);
 
-    async function runSearch(q){
-  try{
-    const res = await apiGet(API.endpoints.search(q, 1, 20));
-    const list = res?.items || [];
+            return (
+                <div className="pb-24 pt-6 px-6">
+                    <div className="flex justify-between items-center mb-8">
+                        <div><p className="text-gray-400 text-xs mb-1">Welcome Back 👋</p><h1 className="text-2xl font-bold text-white">Guest User</h1></div>
+                    </div>
+                    
+                    <div className="mb-8">
+                        <h2 className="text-lg font-bold text-white mb-4">Trending Now</h2>
+                        <div className="flex gap-4 overflow-x-auto no-scrollbar snap-x pb-4">
+                            {topMovies.map(m => <MovieCard key={m.id} movie={m} />)}
+                        </div>
+                    </div>
 
-    searchResults.innerHTML = list.map(it => {
-      const year = (it.year || "").slice(0,4);
-      return `
-        <div class="result" data-id="${it.code}">
-          <img src="${it.poster || ""}" alt="">
-          <div style="min-width:0">
-            <div class="rname">${it.title || "—"}</div>
-            <div class="rsub">${year ? `سال ${year}` : ""} ${it.vote ? ` • IMDb ${it.vote}` : ""}</div>
-          </div>
-        </div>
-      `;
-    }).join("");
+                    <div>
+                        <h2 className="text-lg font-bold text-white mb-4">Latest</h2>
+                        <div className="grid grid-cols-3 gap-3">
+                            {latestMovies.map(m => <MovieCard key={m.id} movie={m} />)}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
 
-    searchResults.querySelectorAll(".result").forEach(r=>{
-      r.onclick = ()=>{
-        closeSearch();
-        openMovie(r.dataset.id); // ✅ code
-      };
-    });
-  }catch(err){
-    console.error(err);
-    searchResults.innerHTML = `<div style="color:rgba(255,255,255,.7);font-weight:800">نتیجه‌ای پیدا نشد یا خطای API</div>`;
-  }
-}
+        const DetailPage = () => {
+            const { code } = useParams();
+            const navigate = useNavigate();
+            const [showSheet, setShowSheet] = useState(false);
+            
+            // DEMO DATA
+            const content = {
+                title: "Oppenheimer",
+                poster: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
+                year: "2023",
+                vote: 8.1,
+                type: "movie",
+                genres: "Drama, History",
+                overview: "The story of American scientist J. Robert Oppenheimer and his role in the development of the atomic bomb."
+            };
+            
+            const tree = [
+                {id: 1, text: "1080p SoftSub", media_type: "url"},
+                {id: 2, text: "720p Dubbed", media_type: "url"},
+            ];
 
-    /*************************************************
-     * 6) Load data
-     *************************************************/
-    async function loadChips(){
-      try{
-        async function loadChips(){
-        renderChips([
-          {id:"movie", name:"فیلم"},
-          {id:"series", name:"سریال"},
-        ]);
-      }
+            return (
+                <div className="pb-24 min-h-screen bg-dark-bg relative">
+                    <div className="absolute top-0 left-0 w-full h-[65vh] z-0">
+                        <img src={content.poster} className="w-full h-full object-cover opacity-50" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-dark-bg/20 via-dark-bg/80 to-dark-bg" />
+                    </div>
+                    <div className="relative z-10 px-6 pt-6 flex justify-between">
+                        <button onClick={() => navigate(-1)} className="p-3 bg-white/10 backdrop-blur-md rounded-full"><IconBack /></button>
+                    </div>
+                    <div className="relative z-10 mt-[25vh] px-6 text-center">
+                        <div className="w-48 mx-auto rounded-2xl overflow-hidden shadow-2xl mb-6 border-2 border-white/10">
+                            <img src={content.poster} className="w-full" />
+                        </div>
+                        <h1 className="text-3xl font-bold text-white mb-2">{content.title}</h1>
+                        <div className="flex justify-center items-center gap-4 text-gray-400 text-xs mb-6">
+                            <span>{content.year}</span> <div className="w-1 h-1 bg-gray-600 rounded-full"></div> <span>IMDb {content.vote}</span>
+                        </div>
+                        <div className="flex gap-4 justify-center mb-8">
+                            <button className="flex-1 bg-white text-black py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2"><IconPlay /> Play</button>
+                            <button onClick={() => setShowSheet(true)} className="flex-1 bg-white/10 backdrop-blur-md text-white py-3.5 rounded-2xl font-bold flex items-center justify-center gap-2 border border-white/10"><IconDownload /> Download</button>
+                        </div>
+                        <div className="text-left"><h3 className="text-lg font-bold text-white mb-2">Storyline</h3><p className="text-gray-400 text-sm">{content.overview}</p></div>
+                    </div>
+                    {showSheet && <DownloadSheet tree={tree} title={content.title} onClose={() => setShowSheet(false)} />}
+                </div>
+            );
+        };
 
-        renderChips(cats || []);
-      }catch(err){
-        console.error(err);
-        // اگر API دسته‌بندی نداره، ثابت بسازیم
-        renderChips([
-          {id:1,name:"Action"},
-          {id:2,name:"Comedy"},
-          {id:3,name:"Drama"},
-          {id:4,name:"Romance"},
-        ]);
-      }
-    }
+        const App = () => {
+            return (
+                <HashRouter>
+                    <div className="max-w-md mx-auto min-h-screen bg-dark-bg text-white shadow-2xl relative overflow-hidden font-sans">
+                        <Routes>
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/detail/:code" element={<DetailPage />} />
+                            <Route path="/explore" element={<div className='p-10 text-center'>Explore Page (Demo)</div>} />
+                            <Route path="/watchlist" element={<div className='p-10 text-center'>Watchlist (Demo)</div>} />
+                            <Route path="/profile" element={<div className='p-10 text-center'>Profile (Demo)</div>} />
+                        </Routes>
+                        <BottomNav />
+                    </div>
+                </HashRouter>
+            );
+        };
 
-    async function loadRails(type=null){
-  try{
-    const [topList, latestRes] = await Promise.all([
-      apiGet(API.endpoints.top),
-      apiGet(API.endpoints.movies(1, 12, type)),
-    ]);
-
-    cachedTrending = topList || [];
-    cachedLatest = (latestRes?.items) || [];
-
-    renderRail(latestRail, cachedLatest);
-    renderRail(trendRail, cachedTrending);
-
-    const heroItem = cachedTrending?.[0] || cachedLatest?.[0];
-    if(heroItem) pickHero(heroItem);
-
-    bindCardClicks();
-  }catch(err){
-    console.error(err);
-  }
-}
-
-
-    // Nav tabs (فعلاً فقط UI)
-    document.querySelectorAll(".nav-item").forEach(item=>{
-      item.addEventListener("click", ()=>{
-        document.querySelectorAll(".nav-item").forEach(x=>x.classList.remove("active"));
-        item.classList.add("active");
-
-        const tab = item.dataset.tab;
-        if(tab === "watchlist"){
-          // اگر خواستی صفحه جدا بسازی، اینجا route کن
-          tg?.showPopup?.({title:"واچ‌لیست", message:"این بخش رو هم می‌تونیم مثل عکس بسازیم.", buttons:[{type:"ok"}]});
-        }
-      });
-    });
-
-    // init
-    (async function init(){
-      await loadChips();
-      await loadRails();
-    })();
-  </script>
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
